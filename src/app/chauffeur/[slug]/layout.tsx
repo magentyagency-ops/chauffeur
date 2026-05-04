@@ -27,6 +27,7 @@ export default async function PublicDriverLayout({
 
   return (
     <div className="bg-black min-h-screen">
+      <style dangerouslySetInnerHTML={{ __html: `body { background-color: black !important; }` }} />
       {children}
     </div>
   );
