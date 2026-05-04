@@ -8,48 +8,30 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-
   const callbackError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(
-    callbackError === "auth_callback_error"
-      ? "Erreur d'authentification. Veuillez réessayer."
-      : ""
+    callbackError === "auth_callback_error" ? "Erreur d'authentification. Veuillez réessayer." : ""
   );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-
-    if (!email.trim() || !password.trim()) {
-      setError("Veuillez remplir tous les champs.");
-      return;
-    }
-
+    if (!email.trim() || !password.trim()) { setError("Veuillez remplir tous les champs."); return; }
     setLoading(true);
-
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          setError("Email ou mot de passe incorrect.");
-        } else if (signInError.message.includes("Email not confirmed")) {
-          setError("Veuillez confirmer votre email avant de vous connecter.");
-        } else {
-          setError(signInError.message);
-        }
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) {
+        if (err.message.includes("Invalid login")) setError("Email ou mot de passe incorrect.");
+        else if (err.message.includes("not confirmed")) setError("Veuillez confirmer votre email.");
+        else setError(err.message);
         setLoading(false);
         return;
       }
-
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -60,158 +42,50 @@ function LoginForm() {
   }
 
   return (
-    <div className="glass rounded-2xl p-8 animate-scale-in">
+    <div className="card p-8">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">
-          Content de vous revoir
-        </h1>
-        <p className="text-text-muted text-sm">
-          Connectez-vous à votre espace chauffeur
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">Content de vous revoir</h1>
+        <p className="text-sm text-muted">Connectez-vous à votre espace chauffeur</p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
+        <div className="mb-6 p-3.5 rounded-xl bg-error/8 border border-error/15 text-error text-sm flex items-center gap-2.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Email */}
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1.5">
-            Email
-          </label>
-          <div className="relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-            </div>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jean@exemple.com"
-              autoComplete="email"
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-surface border border-surface-border text-foreground text-sm placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300"
-            />
-          </div>
+          <label htmlFor="email" className="label">Email</label>
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jean@exemple.com" autoComplete="email" className="input" />
         </div>
 
-        {/* Password */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="block text-sm font-medium text-text-secondary">
-              Mot de passe
-            </label>
-            <a
-              href="/auth/forgot-password"
-              className="text-xs text-primary hover:text-primary-light transition-colors"
-            >
-              Mot de passe oublié ?
-            </a>
+            <label htmlFor="password" className="label !mb-0">Mot de passe</label>
+            <a href="/auth/forgot-password" className="text-[12px] text-muted hover:text-foreground transition-colors">Oublié ?</a>
           </div>
           <div className="relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+            <input id="password" type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Votre mot de passe" autoComplete="current-password" className="input pr-11" />
+            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                {showPw ? <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></> : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}
               </svg>
-            </div>
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Votre mot de passe"
-              autoComplete="current-password"
-              className="w-full pl-11 pr-12 py-3 rounded-xl bg-surface border border-surface-border text-foreground text-sm placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
-            >
-              {showPassword ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
             </button>
           </div>
         </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary w-full justify-center !py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button type="submit" disabled={loading} className="btn-primary w-full !py-3.5 disabled:opacity-50 disabled:cursor-not-allowed">
           {loading ? (
-            <>
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              <span>Connexion en cours...</span>
-            </>
-          ) : (
-            <>
-              <span>Se connecter</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </>
-          )}
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+          ) : "Se connecter"}
         </button>
       </form>
 
-      {/* Divider */}
-      <div className="my-6 flex items-center gap-4">
-        <div className="flex-1 h-px bg-surface-border" />
-        <span className="text-xs text-text-muted uppercase tracking-wider">ou</span>
-        <div className="flex-1 h-px bg-surface-border" />
-      </div>
-
-      {/* Google login placeholder */}
-      <button
-        type="button"
-        className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-surface border border-surface-border text-text-secondary text-sm font-medium hover:border-primary/20 hover:bg-surface-light transition-all duration-300 cursor-not-allowed opacity-50"
-        disabled
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-        </svg>
-        Continuer avec Google (bientôt)
-      </button>
-
-      {/* Link to register */}
-      <p className="mt-6 text-center text-sm text-text-muted">
+      <p className="mt-6 text-center text-sm text-muted">
         Pas encore de compte ?{" "}
-        <a
-          href="/auth/register"
-          className="text-primary hover:text-primary-light transition-colors font-medium"
-        >
-          Créer un compte
-        </a>
+        <a href="/auth/register" className="text-foreground font-medium hover:underline">Créer un compte</a>
       </p>
     </div>
   );
@@ -219,7 +93,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center p-8"><span className="animate-spin h-8 w-8 rounded-full border-4 border-primary border-t-transparent"></span></div>}>
+    <Suspense fallback={<div className="flex justify-center p-12"><div className="animate-spin h-6 w-6 rounded-full border-2 border-foreground border-t-transparent" /></div>}>
       <LoginForm />
     </Suspense>
   );

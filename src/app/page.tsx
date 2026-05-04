@@ -1,45 +1,50 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
-// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
-function Logo({ size = "md", color }: { size?: "sm" | "md", color?: string }) {
-  const big = size !== "sm";
-  const fg = color || "var(--foreground)";
+/* ═══════════════════════════════════════════════════════════
+   LANDING PAGE — PrivéChauffeur
+   ═══════════════════════════════════════════════════════════ */
+
+// ─── Logo ──────────────────────────────────────────────────
+function Logo() {
   return (
-    <div className="flex items-center gap-2 cursor-pointer">
-      <div className="flex items-center justify-center shrink-0 relative" style={{ width: big ? 30 : 24, height: big ? 30 : 24, borderRadius: "50%", background: fg }}>
-        <span className="display-font italic leading-none mt-0.5" style={{ fontSize: big ? 16 : 13, fontWeight: 500, color: "var(--background)" }}>P</span>
+    <Link href="/" className="flex items-center gap-2">
+      <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
+        <span className="text-background text-sm font-semibold leading-none mt-px">P</span>
       </div>
-      <span style={{ fontSize: big ? 17 : 15, fontWeight: 600, letterSpacing: "-.02em", color: fg }}>Privé<span style={{ fontWeight: 400, opacity: .65 }}>chauffeur</span></span>
-    </div>
+      <span className="text-[17px] font-semibold tracking-tight text-foreground">
+        Privé<span className="font-normal text-muted">chauffeur</span>
+      </span>
+    </Link>
   );
 }
 
-function Reveal({ children, delay = 0, className = "", style = {} }: any) {
+// ─── Reveal on scroll ──────────────────────────────────────
+function Reveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
+  const [visible, setVisible] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setShown(true); io.disconnect(); }
-    }, { threshold: 0.12, rootMargin: "-30px 0px" });
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); io.disconnect(); } },
+      { threshold: 0.1, rootMargin: "-40px" }
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  
+
   return (
     <div
       ref={ref}
       className={className}
       style={{
-        opacity: shown ? 1 : 0,
-        transform: shown ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity .85s ${delay}s cubic-bezier(.16, 1, .3, 1), transform .85s ${delay}s cubic-bezier(.16, 1, .3, 1)`,
-        willChange: "transform, opacity",
-        ...style,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: "opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1)",
       }}
     >
       {children}
@@ -47,139 +52,141 @@ function Reveal({ children, delay = 0, className = "", style = {} }: any) {
   );
 }
 
+// ─── Check icon ────────────────────────────────────────────
+function Check() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-success">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+// ─── Arrow icon ────────────────────────────────────────────
+function Arrow() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
-  const [annualBilling, setAnnualBilling] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [annual, setAnnual] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const fn = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const navLinks = ["Fonctionnalités", "Comment ça marche", "Tarifs", "FAQ"];
-
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* NAV */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? "color-mix(in srgb, var(--background) 85%, transparent)" : "transparent",
-        backdropFilter: scrolled ? "saturate(180%) blur(20px)" : "none",
-        WebkitBackdropFilter: scrolled ? "saturate(180%) blur(20px)" : "none",
-        borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
-        transition: "all .35s cubic-bezier(.16, 1, .3, 1)",
-        padding: "0 40px",
-      }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div className="min-h-screen bg-background text-foreground">
+
+      {/* ═══ NAVBAR ═══ */}
+      <nav
+        className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+        style={{
+          background: scrolled ? "rgba(250,250,248,.85)" : "transparent",
+          backdropFilter: scrolled ? "blur(16px) saturate(180%)" : "none",
+          borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
+        }}
+      >
+        <div className="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
           <Logo />
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }} className="hidden md:flex">
-            {navLinks.map(l => <span key={l} className="text-sm font-medium text-muted hover:text-foreground cursor-pointer transition-colors">{l}</span>)}
+          <div className="hidden md:flex items-center gap-8">
+            {["Fonctionnalités", "Tarifs", "FAQ"].map(l => (
+              <a key={l} href={`#${l.toLowerCase()}`} className="text-[13px] font-medium text-muted hover:text-foreground transition-colors">{l}</a>
+            ))}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Link href="/auth/login" className="btn-secondary" style={{ padding: "8px 20px", fontSize: 14 }}>Connexion</Link>
-            <Link href="/auth/register" className="btn-primary" style={{ padding: "8px 20px", fontSize: 14 }}>Commencer</Link>
+          <div className="flex items-center gap-3">
+            <Link href="/auth/login" className="btn-secondary !py-2 !px-5 !text-[13px]">Connexion</Link>
+            <Link href="/auth/register" className="btn-primary !py-2 !px-5 !text-[13px]">Commencer</Link>
           </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "160px 40px 80px", textAlign: "center" }}>
-        <div aria-hidden="true" style={{
-          position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
-          width: 800, height: 600, pointerEvents: "none", zIndex: 0,
-          background: `radial-gradient(ellipse at center, var(--success)10 0%, transparent 60%)`,
-          filter: "blur(40px)"
-        }} />
-
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "7px 16px 7px 8px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 100, marginBottom: 36, boxShadow: "0 1px 2px rgba(0,0,0,.04)" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "var(--success)", color: "#fff" }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </span>
-            <span style={{ fontSize: 13, color: "var(--foreground)", fontWeight: 500 }}>+500 chauffeurs déjà en activité</span>
+      {/* ═══ HERO ═══ */}
+      <section className="pt-40 pb-24 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="fade-up inline-flex items-center gap-2 pill bg-surface border border-border mb-8">
+            <span className="w-2 h-2 rounded-full bg-success" />
+            <span className="text-[13px] text-muted font-medium">+500 chauffeurs en activité</span>
           </div>
 
-          <h1 className="fade-up text-5xl md:text-7xl lg:text-8xl font-medium tracking-tighter leading-none mb-7" style={{ animationDelay: ".05s" }}>
-            <span className="display-font italic font-normal">Votre</span> clientèle privée,<br />
-            <span className="text-muted">sans </span><span className="display-font italic font-normal text-muted">intermédiaire.</span>
+          <h1 className="fade-up text-[clamp(40px,7vw,72px)] font-semibold tracking-[-0.04em] leading-[1.05] mb-6" style={{ animationDelay: ".04s" }}>
+            Votre clientèle privée,<br />
+            <span className="text-muted">sans intermédiaire.</span>
           </h1>
 
-          <p className="fade-up text-lg md:text-xl text-muted max-w-2xl mx-auto mb-11 leading-relaxed" style={{ animationDelay: ".1s" }}>
+          <p className="fade-up text-lg text-muted max-w-xl mx-auto mb-10 leading-relaxed" style={{ animationDelay: ".08s" }}>
             Créez votre page de réservation, gérez vos clients et recevez des demandes directes — en quelques minutes.
           </p>
 
-          <div className="fade-up flex flex-wrap justify-center gap-3" style={{ animationDelay: ".15s" }}>
-            <Link href="/auth/register" className="btn-primary" style={{ padding: "15px 32px" }}>
-              Créer mon espace
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <div className="fade-up flex flex-wrap justify-center gap-3" style={{ animationDelay: ".12s" }}>
+            <Link href="/auth/register" className="btn-primary !py-3.5 !px-8 !text-[15px]">
+              Créer mon espace <Arrow />
             </Link>
-            <Link href="/chauffeur/jean-dupont" className="btn-secondary" style={{ padding: "15px 32px" }}>
-              Voir une démo client
+            <Link href="/chauffeur/jean-dupont" className="btn-secondary !py-3.5 !px-8 !text-[15px]">
+              Voir une démo
             </Link>
           </div>
 
-          <div className="fade-up mt-6 text-sm text-muted" style={{ animationDelay: ".18s" }}>
-            <span className="font-mono">14 jours gratuits</span> · Sans CB · Sans engagement
-          </div>
+          <p className="fade-up text-sm text-muted mt-6" style={{ animationDelay: ".16s" }}>
+            14 jours gratuits · Sans CB · Sans engagement
+          </p>
         </div>
 
-        {/* Mock dashboard preview */}
-        <div className="fade-up mt-24 relative" style={{ animationDelay: ".2s" }}>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, padding: 6, maxWidth: 920, margin: "0 auto", boxShadow: "0 30px 60px -20px rgba(10,10,10,.18), 0 8px 24px -8px rgba(10,10,10,.08)" }}>
-            <div style={{ borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", gap: 6 }}>
-                {["#ff5f57","#ffbd2e","#28c840"].map((c,i) => <div key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: c }} />)}
+        {/* Dashboard preview */}
+        <div className="fade-up max-w-4xl mx-auto mt-20" style={{ animationDelay: ".2s" }}>
+          <div className="card p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,.12)]">
+            {/* Browser bar */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border rounded-t-xl">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                <div className="w-3 h-3 rounded-full bg-[#28c840]" />
               </div>
-              <div style={{ flex: 1, background: "var(--surface-light)", borderRadius: 6, padding: "5px 12px", display: "flex", alignItems: "center", gap: 8, maxWidth: 320, margin: "0 auto" }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "'JetBrains Mono', monospace" }}>app.privechauffeur.com</span>
+              <div className="flex-1 max-w-xs mx-auto bg-surface-alt rounded-md px-3 py-1.5 text-center">
+                <span className="text-[11px] text-muted font-mono">app.privechauffeur.com</span>
               </div>
-              <div style={{ width: 60 }} />
             </div>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 0, borderRadius: "0 0 12px 12px", overflow: "hidden", background: "var(--background)", minHeight: 320 }}>
-              <div className="hidden md:flex flex-col gap-1 p-3" style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}>
-                <div style={{ padding: "0 8px 14px", fontSize: 10, fontWeight: 700, color: "var(--muted)", letterSpacing: ".1em", textTransform: "uppercase" }}>Espace pro</div>
-                {[
-                  { label: "Accueil", icon: "M3 12l2-2 7-7 7 7 2 2v9a2 2 0 0 1-2 2h-3v-7H10v7H7a2 2 0 0 1-2-2v-9z" },
-                  { label: "Réservations", icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" },
-                  { label: "Clients", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
-                ].map((item, i) => (
-                  <div key={item.label} style={{ padding: "8px 10px", borderRadius: 6, background: i === 0 ? "var(--surface-light)" : "transparent", color: i === 0 ? "var(--foreground)" : "var(--muted)", fontSize: 13, fontWeight: i === 0 ? 600 : 500, display: "flex", alignItems: "center", gap: 10 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={item.icon}/></svg>
-                    {item.label}
-                  </div>
+            {/* Content */}
+            <div className="grid grid-cols-[180px_1fr] min-h-[280px] bg-background rounded-b-xl overflow-hidden">
+              {/* Mini sidebar */}
+              <div className="bg-surface border-r border-border p-4 hidden md:block">
+                <div className="text-[10px] font-semibold text-muted uppercase tracking-widest px-2 mb-3">Espace pro</div>
+                {["Accueil", "Réservations", "Clients"].map((l, i) => (
+                  <div key={l} className={`text-[12px] px-3 py-2 rounded-lg mb-0.5 ${i === 0 ? "bg-surface-alt font-semibold text-foreground" : "text-muted"}`}>{l}</div>
                 ))}
               </div>
-              <div className="p-6 text-left">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              {/* Mini dashboard */}
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-4">
                   <div>
-                    <div className="display-font" style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", marginBottom: 4 }}>Bonjour Jean</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Aujourd'hui · 3 courses prévues</div>
+                    <div className="text-lg font-semibold tracking-tight">Bonjour Jean</div>
+                    <div className="text-[11px] text-muted">Aujourd'hui · 3 courses</div>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "var(--surface)", color: "var(--success)", border: "1px solid var(--border)", fontSize: 12, fontWeight: 600 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)", boxShadow: "0 0 8px var(--success)" }} />
-                    En ligne
+                  <div className="pill bg-surface border border-border !text-[11px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                    <span className="text-success font-medium">En ligne</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                  {[["5","Demandes","var(--foreground)"],["3","Confirmées","var(--success)"],["42","Clients","var(--foreground)"],["285€","Aujourd'hui","var(--foreground)"]].map(([v,l,c]) => (
-                    <div key={l} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px" }}>
-                      <div className="display-font" style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", color: c }}>{v}</div>
-                      <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontWeight: 500 }}>{l}</div>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[["5", "Demandes"], ["3", "Confirmées"], ["42", "Clients"], ["285€", "Revenu"]].map(([v, l]) => (
+                    <div key={l} className="card p-3 !rounded-lg">
+                      <div className="text-lg font-semibold tracking-tight">{v}</div>
+                      <div className="text-[10px] text-muted font-medium">{l}</div>
                     </div>
                   ))}
                 </div>
-                {/* Booking row */}
-                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--surface-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>S</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 1 }}>Sophie M. · 14:30</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>CDG T2E → Hôtel Ritz</div>
+                <div className="card p-3 !rounded-lg flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center text-[11px] font-bold">S</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] font-semibold">Sophie M. · 14:30</div>
+                    <div className="text-[11px] text-muted truncate">CDG T2E → Hôtel Ritz</div>
                   </div>
-                  <div className="display-font" style={{ fontSize: 16, fontWeight: 500 }}>85€</div>
+                  <div className="text-sm font-semibold">85€</div>
                 </div>
               </div>
             </div>
@@ -187,180 +194,239 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
-        <div style={{ marginBottom: 64, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 24, height: 1, background: "var(--muted)" }} />
-              Fonctionnalités
-            </p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight leading-tight">
-              Tout pour développer<br />
-              <span className="display-font italic font-normal text-muted">votre activité.</span>
-            </h2>
-          </div>
-          <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 360, lineHeight: 1.6 }}>
-            Une plateforme complète pensée pour les chauffeurs indépendants. Pas de commission, pas d'intermédiaire.
-          </p>
-        </div>
-        <div className="stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-[var(--border)] rounded-2xl overflow-hidden bg-[var(--surface)]">
-          {[
-            { icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", title: "Page chauffeur", desc: "Votre vitrine pro en ligne. Photo, bio, véhicule, avis et bouton de réservation." },
-            { icon: "M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", title: "Réservation directe", desc: "Vos clients réservent depuis votre page. Confirmez en un clic, sans intermédiaire." },
-            { icon: "M22 12h-4l-3 9L9 3l-3 9H2", title: "Disponibilité temps réel", desc: "Activez ou désactivez votre dispo d'un geste. Vos clients voient votre statut en direct." },
-            { icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75", title: "CRM intégré", desc: "Historique, préférences, coordonnées et notes pour chaque client privé." },
-            { icon: "M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6", title: "Tarifs personnalisés", desc: "Fixez vos propres prix par trajet, heure ou kilomètre. Transparence totale." },
-            { icon: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0", title: "Notifications", desc: "Alertes instantanées pour chaque nouvelle réservation ou message client." },
-          ].map(({ icon, title, desc }, i) => (
-            <div key={title} className="p-8 border-b border-[var(--border)] lg:border-r" style={{ borderRightWidth: (i % 3 !== 2) ? "1px" : "0" }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--surface-light)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, color: "var(--foreground)" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  {icon.split(" M").map((seg, k) => <path key={k} d={k === 0 ? seg : "M" + seg} />)}
-                </svg>
+      {/* ═══ FEATURES ═══ */}
+      <Reveal>
+        <section id="fonctionnalités" className="py-24 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+              <div>
+                <p className="section-label mb-4">Fonctionnalités</p>
+                <h2 className="text-4xl md:text-5xl font-semibold tracking-tight">
+                  Tout pour développer<br />
+                  <span className="text-muted">votre activité.</span>
+                </h2>
               </div>
-              <div className="display-font text-xl font-medium mb-2 tracking-tight">{title}</div>
-              <div style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
+              <p className="text-[15px] text-muted max-w-sm leading-relaxed">
+                Une plateforme complète pour chauffeurs indépendants. Pas de commission, pas d'intermédiaire.
+              </p>
             </div>
-          ))}
-        </div>
-      </section></Reveal>
 
-      {/* HOW IT WORKS */}
-      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
-        <div style={{ marginBottom: 64 }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ width: 24, height: 1, background: "var(--muted)" }} />
-            Comment ça marche
-          </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight leading-tight max-w-3xl">
-            Lancez-vous en <span className="display-font italic font-normal">3 étapes</span>.
-          </h2>
-        </div>
-        <div className="stagger grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { num: "01", title: "Créez votre compte", desc: "Inscrivez-vous en 2 minutes. Aucune carte bancaire requise." },
-            { num: "02", title: "Configurez votre page", desc: "Ajoutez vos informations, votre véhicule et vos tarifs." },
-            { num: "03", title: "Partagez votre lien", desc: "Envoyez votre lien à vos clients par SMS ou WhatsApp." },
-          ].map(({ num, title, desc }, i) => (
-            <div key={num} style={{ display: "flex", flexDirection: "column", gap: 16, padding: "32px 28px 32px 0", borderTop: "1px solid var(--border)", position: "relative" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <span className="font-mono text-xs font-medium text-muted">{num}</span>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--foreground)", color: "var(--background)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{i + 1}</div>
-              </div>
-              <div className="display-font text-2xl font-medium tracking-tight leading-snug">{title}</div>
-              <div style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-      </section></Reveal>
-
-      {/* PRICING */}
-      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
-        <div style={{ marginBottom: 48, textAlign: "center" }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16 }}>Tarifs</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight leading-tight">
-            Un prix simple,<br /><span className="display-font italic font-normal">sans commission.</span>
-          </h2>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 48 }}>
-          <span style={{ fontSize: 14, color: !annualBilling ? "var(--foreground)" : "var(--muted)", fontWeight: 500 }}>Mensuel</span>
-          <div
-            onClick={() => setAnnualBilling(!annualBilling)}
-            style={{ width: 44, height: 24, borderRadius: 12, background: annualBilling ? "var(--foreground)" : "var(--surface-light)", border: "1px solid var(--border)", cursor: "pointer", position: "relative", transition: "background .25s" }}
-          >
-            <div style={{ position: "absolute", top: 2, left: annualBilling ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "var(--surface)", transition: "left .25s", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
-          </div>
-          <span style={{ fontSize: 14, color: annualBilling ? "var(--foreground)" : "var(--muted)", fontWeight: 500 }}>Annuel</span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--success)", background: "color-mix(in srgb, var(--success) 15%, transparent)", padding: "3px 10px", borderRadius: 100, opacity: annualBilling ? 1 : 0.5, transition: "opacity .25s" }}>−20%</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
-          {[
-            { name: "Starter", price: annualBilling ? 24 : 29, pop: false, tagline: "Pour démarrer", features: ["Page chauffeur publique", "Réservation directe", "Jusqu'à 50 clients", "Notifications email"] },
-            { name: "Pro", price: annualBilling ? 65 : 79, pop: true, tagline: "Le plus populaire", features: ["Tout Starter, et :", "CRM clients complet", "Clients illimités", "Notifications SMS", "Statistiques avancées", "Support prioritaire"] },
-            { name: "Premium", price: annualBilling ? 119 : 149, pop: false, tagline: "Pour les flottes", features: ["Tout Pro, et :", "Multi-véhicules", "Facturation automatique", "API & Marque blanche"] },
-          ].map(({ name, price, pop, tagline, features }) => (
-            <div key={name} style={{
-              padding: pop ? 32 : 28, borderRadius: 16, position: "relative",
-              background: pop ? "var(--foreground)" : "var(--surface)",
-              color: pop ? "var(--background)" : "var(--foreground)",
-              border: pop ? "none" : "1px solid var(--border)",
-              boxShadow: pop ? "0 20px 40px -12px rgba(10,10,10,.25)" : "0 1px 3px rgba(10,10,10,.04)",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-                <div>
-                  <div className="display-font text-2xl font-medium tracking-tight mb-1">{name}</div>
-                  <div style={{ fontSize: 12, opacity: .65 }}>{tagline}</div>
-                </div>
-                {pop && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--success)", boxShadow: "0 0 12px var(--success)", marginTop: 6 }} />}
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-                <span className="display-font text-6xl font-medium tracking-tight leading-none">{price}€</span>
-                <span style={{ fontSize: 14, opacity: .55 }}>/mois</span>
-              </div>
-              {annualBilling && <div className="font-mono" style={{ fontSize: 11, opacity: .55, marginBottom: 24 }}>Facturé annuellement</div>}
-              {!annualBilling && <div style={{ height: 11, marginBottom: 24 }} />}
-              <Link
-                href="/auth/register"
-                className="block text-center w-full py-3 text-sm font-semibold rounded-lg transition-transform hover:-translate-y-0.5"
-                style={{
-                  background: pop ? "var(--background)" : "var(--foreground)",
-                  color: pop ? "var(--foreground)" : "var(--background)",
-                }}
-              >
-                Commencer
-              </Link>
-              <div style={{ borderTop: `1px solid ${pop ? "rgba(255,255,255,.12)" : "var(--border)"}`, margin: "24px 0 0", paddingTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-                {features.map((f, j) => (
-                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, opacity: j === 0 && (f.includes("Tout")) ? .8 : 1, fontWeight: j === 0 && f.includes("Tout") ? 600 : 400 }}>
-                    {!(j === 0 && f.includes("Tout")) && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 3, flexShrink: 0, opacity: .55 }}><path d="M20 6L9 17l-5-5"/></svg>
-                    )}
-                    {(j === 0 && f.includes("Tout")) && (
-                      <span style={{ width: 14, marginTop: 3, flexShrink: 0 }} />
-                    )}
-                    <span style={{ lineHeight: 1.45 }}>{f}</span>
+            <div className="stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border rounded-2xl overflow-hidden border border-border">
+              {[
+                { title: "Page chauffeur", desc: "Votre vitrine pro en ligne. Photo, bio, véhicule et bouton de réservation.", icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" },
+                { title: "Réservation directe", desc: "Vos clients réservent depuis votre page. Confirmez en un clic.", icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" },
+                { title: "Disponibilité live", desc: "Activez votre dispo d'un geste. Vos clients voient votre statut en direct.", icon: "M22 12h-4l-3 9L9 3l-3 9H2" },
+                { title: "CRM intégré", desc: "Historique, préférences et notes pour chaque client.", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" },
+                { title: "Tarifs personnalisés", desc: "Fixez vos prix par trajet, heure ou kilomètre. Transparence totale.", icon: "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" },
+                { title: "Notifications", desc: "Alertes instantanées pour chaque nouvelle réservation.", icon: "M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 003.4 0" },
+              ].map(({ title, desc, icon }) => (
+                <div key={title} className="bg-surface p-8">
+                  <div className="w-10 h-10 rounded-xl bg-surface-alt flex items-center justify-center mb-5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={icon} />
+                    </svg>
                   </div>
-                ))}
+                  <h3 className="text-lg font-semibold mb-2 tracking-tight">{title}</h3>
+                  <p className="text-[14px] text-muted leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* ═══ HOW IT WORKS ═══ */}
+      <Reveal>
+        <section className="py-24 px-6 bg-surface border-y border-border">
+          <div className="max-w-6xl mx-auto">
+            <p className="section-label mb-4">Comment ça marche</p>
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mb-16">
+              3 étapes, <span className="text-muted">c'est tout.</span>
+            </h2>
+
+            <div className="stagger grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                { num: "01", title: "Créez votre compte", desc: "Inscrivez-vous en 2 minutes. Aucune carte bancaire requise." },
+                { num: "02", title: "Configurez votre page", desc: "Ajoutez vos informations, votre véhicule et vos tarifs." },
+                { num: "03", title: "Partagez votre lien", desc: "Envoyez votre lien à vos clients par SMS ou WhatsApp." },
+              ].map(({ num, title, desc }) => (
+                <div key={num} className="border-t border-border pt-8">
+                  <span className="text-[12px] font-mono text-muted">{num}</span>
+                  <h3 className="text-xl font-semibold tracking-tight mt-4 mb-3">{title}</h3>
+                  <p className="text-[14px] text-muted leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* ═══ SOCIAL PROOF ═══ */}
+      <Reveal>
+        <section className="py-24 px-6">
+          <div className="max-w-6xl mx-auto">
+            <p className="section-label mb-4">Témoignages</p>
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mb-16">
+              Ils ont repris <span className="text-muted">le contrôle.</span>
+            </h2>
+
+            <div className="stagger grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { name: "Karim B.", role: "VTC · Paris", text: "Avant, je payais 25% de commission. Aujourd'hui, je garde tout. Mes clients réservent direct sur ma page." },
+                { name: "Stéphane M.", role: "Chauffeur privé · Lyon", text: "Le CRM m'a changé la vie. Je sais ce que mes clients préfèrent, leurs habitudes." },
+                { name: "Aïcha D.", role: "VTC · Marseille", text: "Mes clients adorent pouvoir réserver à n'importe quelle heure sans passer par une appli." },
+              ].map(t => (
+                <div key={t.name} className="card p-7 flex flex-col gap-5">
+                  <p className="text-[15px] leading-relaxed flex-1">"{t.text}"</p>
+                  <div className="flex items-center gap-3 pt-5 border-t border-border">
+                    <div className="w-9 h-9 rounded-full bg-surface-alt flex items-center justify-center text-[13px] font-bold">{t.name[0]}</div>
+                    <div>
+                      <div className="text-[13px] font-semibold">{t.name}</div>
+                      <div className="text-[12px] text-muted">{t.role}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 pt-12 border-t border-border text-center">
+              {[
+                ["500+", "Chauffeurs actifs"],
+                ["12K+", "Courses / mois"],
+                ["4.8★", "Note moyenne"],
+                ["0%", "Commission"],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <div className="text-3xl font-semibold tracking-tight">{v}</div>
+                  <div className="text-[12px] text-muted mt-1 font-medium uppercase tracking-wide">{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* ═══ PRICING ═══ */}
+      <Reveal>
+        <section id="tarifs" className="py-24 px-6 bg-surface border-y border-border">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <p className="section-label mb-4">Tarifs</p>
+              <h2 className="text-4xl md:text-5xl font-semibold tracking-tight">
+                Un prix simple, <span className="text-muted">sans commission.</span>
+              </h2>
+            </div>
+
+            {/* Toggle */}
+            <div className="flex items-center justify-center gap-3 mb-12">
+              <span className={`text-sm font-medium ${!annual ? "text-foreground" : "text-muted"}`}>Mensuel</span>
+              <button
+                onClick={() => setAnnual(!annual)}
+                className="relative w-11 h-6 rounded-full transition-colors"
+                style={{ background: annual ? "var(--foreground)" : "var(--border)" }}
+              >
+                <div className="absolute top-1 w-4 h-4 rounded-full bg-surface shadow-sm transition-all" style={{ left: annual ? 22 : 4 }} />
+              </button>
+              <span className={`text-sm font-medium ${annual ? "text-foreground" : "text-muted"}`}>Annuel</span>
+              <span className="text-[11px] font-semibold text-success bg-success/10 px-2.5 py-1 rounded-full">−20%</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { name: "Starter", price: annual ? 24 : 29, tagline: "Pour démarrer", pop: false, features: ["Page chauffeur publique", "Réservation directe", "Jusqu'à 50 clients", "Notifications email"] },
+                { name: "Pro", price: annual ? 65 : 79, tagline: "Le plus populaire", pop: true, features: ["Tout Starter +", "CRM clients complet", "Clients illimités", "Notifications SMS", "Statistiques avancées", "Support prioritaire"] },
+                { name: "Premium", price: annual ? 119 : 149, tagline: "Pour les flottes", pop: false, features: ["Tout Pro +", "Multi-véhicules", "Facturation automatique", "API & Marque blanche"] },
+              ].map(plan => (
+                <div
+                  key={plan.name}
+                  className="rounded-2xl p-7 transition-shadow"
+                  style={{
+                    background: plan.pop ? "var(--foreground)" : "var(--background)",
+                    color: plan.pop ? "var(--background)" : "var(--foreground)",
+                    border: plan.pop ? "none" : "1px solid var(--border)",
+                    boxShadow: plan.pop ? "0 16px 40px -8px rgba(0,0,0,.25)" : "none",
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold tracking-tight">{plan.name}</h3>
+                      <p className="text-[12px] mt-1" style={{ opacity: .6 }}>{plan.tagline}</p>
+                    </div>
+                    {plan.pop && <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />}
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-5xl font-semibold tracking-tight">{plan.price}€</span>
+                    <span className="text-sm" style={{ opacity: .5 }}>/mois</span>
+                  </div>
+                  {annual && <p className="text-[11px] font-mono mb-6" style={{ opacity: .5 }}>Facturé annuellement</p>}
+                  {!annual && <div className="h-4 mb-6" />}
+
+                  <Link
+                    href="/auth/register"
+                    className="block text-center w-full py-3 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
+                    style={{
+                      background: plan.pop ? "var(--background)" : "var(--foreground)",
+                      color: plan.pop ? "var(--foreground)" : "var(--background)",
+                    }}
+                  >
+                    Commencer
+                  </Link>
+
+                  <div className="mt-6 pt-5 flex flex-col gap-2.5" style={{ borderTop: `1px solid ${plan.pop ? "rgba(255,255,255,.12)" : "var(--border)"}` }}>
+                    {plan.features.map(f => (
+                      <div key={f} className="flex items-start gap-2.5 text-[13px]">
+                        {!f.includes("+") && <Check />}
+                        {f.includes("+") && <span className="w-3.5" />}
+                        <span className={f.includes("+") ? "font-semibold" : ""} style={{ opacity: f.includes("+") ? .7 : 1 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* ═══ CTA ═══ */}
+      <Reveal>
+        <section className="py-24 px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-foreground text-background rounded-3xl p-16 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(6,193,103,.15),transparent_60%)]" />
+              <div className="relative">
+                <p className="section-label !text-background/40 mb-6">Commencez aujourd'hui</p>
+                <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mb-6">
+                  Prêt à reprendre<br />le contrôle ?
+                </h2>
+                <p className="text-[16px] text-background/60 max-w-md mx-auto mb-10 leading-relaxed">
+                  Rejoignez +500 chauffeurs qui ont repris le contrôle — sans commission, sans intermédiaire.
+                </p>
+                <Link
+                  href="/auth/register"
+                  className="inline-flex items-center gap-2 bg-background text-foreground font-semibold text-[15px] px-8 py-4 rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  Créer mon espace <Arrow />
+                </Link>
+                <p className="text-[12px] text-background/40 mt-8 font-mono">14 jours gratuits · Sans CB</p>
               </div>
             </div>
-          ))}
-        </div>
-      </section></Reveal>
-
-      {/* CTA BOTTOM */}
-      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 40px" }}>
-        <div style={{ background: "var(--foreground)", color: "var(--background)", borderRadius: 24, padding: "80px 48px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-          <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--success) 30%, transparent) 0%, transparent 50%)`, pointerEvents: "none" }} />
-          <div style={{ position: "relative" }}>
-            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 24, opacity: .55 }}>Commencez aujourd'hui</p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-6">
-              Prêt à reprendre<br /><span className="display-font italic font-normal">le contrôle ?</span>
-            </h2>
-            <p style={{ fontSize: 17, opacity: .7, marginBottom: 40, maxWidth: 480, margin: "0 auto 40px", lineHeight: 1.55 }}>
-              Rejoignez plus de 500 chauffeurs qui ont repris le contrôle de leur business — sans commission, sans intermédiaire.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/auth/register" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: "var(--background)", color: "var(--foreground)",
-                fontWeight: 600, fontSize: 15, padding: "15px 32px", borderRadius: 10,
-              }} className="hover:-translate-y-0.5 transition-transform">
-                Créer mon espace
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </Link>
-            </div>
-            <div className="font-mono text-xs mt-8 opacity-50">14 jours gratuits · Sans CB</div>
           </div>
-        </div>
-      </section></Reveal>
+        </section>
+      </Reveal>
 
-      {/* FOOTER */}
-      <footer style={{ borderTop: "1px solid var(--border)", padding: "40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: 1200, margin: "0 auto" }}>
-        <Logo />
-        <div style={{ fontSize: 13, color: "var(--muted)" }}>© 2025 PrivéChauffeur. Tous droits réservés.</div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {["CGV", "Confidentialité", "Contact"].map(l => <span key={l} className="text-[13px] text-muted hover:text-foreground cursor-pointer transition-colors">{l}</span>)}
+      {/* ═══ FOOTER ═══ */}
+      <footer className="border-t border-border py-10 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <Logo />
+          <p className="text-[13px] text-muted">© 2025 PrivéChauffeur. Tous droits réservés.</p>
+          <div className="flex gap-6">
+            {["CGV", "Confidentialité", "Contact"].map(l => (
+              <a key={l} href="#" className="text-[13px] text-muted hover:text-foreground transition-colors">{l}</a>
+            ))}
+          </div>
         </div>
       </footer>
     </div>
