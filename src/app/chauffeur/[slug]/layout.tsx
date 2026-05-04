@@ -26,8 +26,8 @@ export default async function PublicDriverLayout({
   const driverName = dbProfile.full_name || "Chauffeur";
 
   return (
-    <>
+    <div className="bg-black min-h-screen">
       {children}
-    </>
+    </div>
   );
 }
