@@ -106,19 +106,12 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         {/* CONTENU PRINCIPAL POUSSÉ VERS LE BAS */}
         <div className="flex-1 flex flex-col justify-end pb-12 sm:pb-24">
           
-          {/* TEXTE PRINCIPAL */}
-          <AnimatePresence>
-            {!activeBookingId && (
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display"
-              >
-                Où souhaitez-<br/>vous aller ?
-              </motion.h1>
-            )}
-          </AnimatePresence>
+          {/* TEXTE PRINCIPAL (Hidden if booking active) */}
+          {!activeBookingId && (
+            <h1 className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display">
+              Où souhaitez-<br/>vous aller ?
+            </h1>
+          )}
           
           {/* FORMULAIRE (FLOATING CARD) OU STATUT */}
           <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center overflow-hidden ${cardBg}`}>
@@ -338,9 +331,11 @@ export default function MobileAppUI({ driver }: { driver: any }) {
               <button 
                 onClick={handleSubmit}
                 disabled={sending}
-                className={`w-full py-5 rounded-[2rem] text-black font-[900] text-lg transition-all active:scale-[0.98] disabled:opacity-50 ${whiteBtn}`}
+                className={`w-full flex items-center justify-center gap-2 py-4 rounded-full font-bold text-black transition-all active:scale-[0.98] ${
+                  sending ? "bg-gray-400 cursor-not-allowed" : `${whiteBtn} hover:brightness-110 hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]`
+                }`}
               >
-                {sending ? "Traitement..." : timing === "now" ? "Confirmer la course" : "Réserver pour plus tard"}
+                {sending ? "Envoi..." : "Confirmer la course"}
               </button>
             </div>
           )}
