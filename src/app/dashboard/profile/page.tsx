@@ -119,24 +119,26 @@ export default function ProfilePage() {
   return (
     <>
       <DashboardHeader title="Profil public">
-        <div className="flex gap-2">
-          <a href={`/chauffeur/${profile.publicSlug}`} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-2 !px-4 !text-[13px] hidden sm:flex">Voir la page</a>
-          <button onClick={handleSave} disabled={saving} className="btn-primary !py-2 !px-4 !text-[13px]">
+        <div className="flex gap-3">
+          <a href={`/chauffeur/${profile.publicSlug}`} target="_blank" rel="noopener noreferrer" className="bg-white border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md rounded-full transition-all font-bold px-5 py-2.5 text-[13px] text-black hidden sm:flex items-center">
+            Voir la page
+          </a>
+          <button onClick={handleSave} disabled={saving} className="bg-black text-white hover:shadow-[0_8px_16px_rgba(0,0,0,0.15)] rounded-full transition-all font-bold px-6 py-2.5 text-[13px] flex items-center">
             {saving ? "..." : "Enregistrer"}
           </button>
         </div>
       </DashboardHeader>
 
-      <main className="p-6 md:p-10 max-w-3xl mx-auto w-full space-y-10 pb-32">
+      <main className="p-6 md:p-10 max-w-4xl mx-auto w-full space-y-10 pb-32">
         
         {/* QR Code & Link Sharing */}
-        <section className="card p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 bg-surface-alt">
-          <div className="shrink-0 space-y-3 text-center">
-            <div className="w-36 h-36 bg-white p-3 rounded-xl shadow-lg mx-auto flex items-center justify-center border border-border/50">
+        <section className="bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-10">
+          <div className="shrink-0 space-y-4 text-center">
+            <div className="w-40 h-40 bg-white p-4 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] mx-auto flex items-center justify-center border border-gray-100">
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/${profile.publicSlug}` : '')}`} 
                 alt="QR Code"
-                className="w-full h-full"
+                className="w-full h-full rounded-lg"
               />
             </div>
             <button 
@@ -148,23 +150,23 @@ export default function ProfilePage() {
                 link.target = '_blank';
                 link.click();
               }}
-              className="text-[11px] font-bold text-accent hover:underline"
+              className="text-[12px] font-[800] text-gray-500 hover:text-black uppercase tracking-wider transition-colors"
             >
               Télécharger le QR Code
             </button>
           </div>
           
-          <div className="flex-1 space-y-4 text-center md:text-left">
+          <div className="flex-1 space-y-5 text-center md:text-left">
             <div>
-              <h3 className="text-xl font-bold tracking-tight">Votre carte de visite</h3>
-              <p className="text-muted text-[13px] mt-1">
+              <h3 className="text-2xl font-[800] tracking-tight text-black font-display">Votre carte de visite</h3>
+              <p className="text-gray-500 text-[15px] mt-2 font-medium">
                 Partagez ce QR code pour permettre à vos clients de réserver, s'abonner ou vous suivre.
               </p>
             </div>
             
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <div className="input flex-1 !bg-surface !border-border text-[13px] font-mono flex items-center px-3 overflow-hidden whitespace-nowrap">
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center overflow-hidden whitespace-nowrap">
                   {typeof window !== 'undefined' ? `${window.location.origin.replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
                 </div>
                 <button 
@@ -172,7 +174,7 @@ export default function ProfilePage() {
                     navigator.clipboard.writeText(window.location.origin + '/chauffeur/' + profile.publicSlug);
                     alert("Lien copié !");
                   }}
-                  className="btn-secondary !py-2 !px-4 !text-[12px] shrink-0"
+                  className="bg-white border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md rounded-2xl transition-all font-bold px-6 py-4 text-[13px] text-black shrink-0"
                 >
                   Copier le lien
                 </button>
@@ -182,15 +184,15 @@ export default function ProfilePage() {
         </section>
 
         {/* Photo */}
-        <section className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-surface-alt border border-border flex items-center justify-center font-bold text-2xl shrink-0 overflow-hidden relative group">
+        <section className="flex items-center gap-6 bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-8">
+          <div className="w-24 h-24 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-[800] text-3xl shrink-0 overflow-hidden relative group shadow-inner">
             {profilePhoto ? (
               <img src={profilePhoto} alt="Profil" className="w-full h-full object-cover" />
             ) : (
-              profile.fullName[0]
+              <span className="text-gray-400">{profile.fullName[0]}</span>
             )}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
             <input 
               type="file" 
@@ -201,7 +203,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="relative inline-block">
-              <button className="btn-secondary !py-2 !px-4 !text-[12px] mb-1">Changer la photo</button>
+              <button className="bg-white border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-full transition-all font-bold px-5 py-2.5 text-[13px] text-black mb-2">Changer la photo</button>
               <input 
                 type="file" 
                 accept="image/*" 
@@ -209,76 +211,76 @@ export default function ProfilePage() {
                 onChange={handlePhotoUpload}
               />
             </div>
-            <p className="text-[11px] text-muted">La photo sera automatiquement optimisée</p>
+            <p className="text-[12px] font-medium text-gray-400">La photo sera automatiquement optimisée</p>
           </div>
         </section>
 
         {/* Essential Info */}
-        <section className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="label">Nom complet</label>
+        <section className="bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-8 md:p-10 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">Nom complet</label>
               <input 
                 type="text" 
                 value={profile.fullName} 
                 onChange={(e) => updateField("fullName", e.target.value)} 
-                className="input" 
+                className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-bold text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all" 
               />
             </div>
-            <div className="space-y-2">
-              <label className="label">Ville</label>
+            <div className="space-y-3">
+              <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">Ville</label>
               <input 
                 type="text" 
                 value={profile.city} 
                 onChange={(e) => updateField("city", e.target.value)} 
-                className="input" 
+                className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-bold text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all" 
               />
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="label">Téléphone</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">Téléphone</label>
               <input 
                 type="text" 
                 value={profile.phone} 
                 onChange={(e) => updateField("phone", e.target.value)} 
-                className="input" 
+                className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-bold text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all" 
               />
             </div>
-            <div className="space-y-2">
-              <label className="label">Identifiant unique (Lien URL)</label>
-              <div className="flex gap-2">
-                <span className="input !bg-surface-alt flex items-center text-muted px-3 select-none">/chauffeur/</span>
+            <div className="space-y-3">
+              <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">Identifiant unique (Lien URL)</label>
+              <div className="flex">
+                <span className="bg-gray-100 border border-gray-100 border-r-0 shadow-inner rounded-l-2xl px-5 py-4 text-[15px] font-bold text-gray-400 flex items-center select-none">/chauffeur/</span>
                 <input 
                   type="text" 
                   value={profile.publicSlug} 
                   onChange={(e) => updateField("publicSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} 
-                  className="input flex-1" 
+                  className="w-full bg-gray-50 border border-gray-100 border-l-0 shadow-inner rounded-r-2xl pr-5 py-4 text-[15px] font-bold text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all" 
                   placeholder="votre-nom"
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="label">WhatsApp (Format international)</label>
+          <div className="space-y-3">
+            <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">WhatsApp (Format international)</label>
             <input 
               type="text" 
               value={profile.whatsapp} 
               onChange={(e) => updateField("whatsapp", e.target.value)} 
-              className="input" 
+              className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-bold text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all" 
               placeholder="Ex: 33612345678"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="label">Biographie / Description</label>
+          <div className="space-y-3">
+            <label className="block text-[12px] font-[800] text-gray-500 uppercase tracking-wider ml-2">Biographie / Description</label>
             <textarea 
               rows={5} 
               value={profile.bio} 
               onChange={(e) => updateField("bio", e.target.value)} 
-              className="input !py-3 resize-none" 
+              className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-medium text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none" 
             />
           </div>
         </section>

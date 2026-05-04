@@ -28,30 +28,29 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="hidden md:flex h-screen w-60 flex-col fixed left-0 top-0 bg-surface border-r border-border z-40">
+    <div className="hidden md:flex h-screen w-[260px] flex-col fixed left-0 top-0 bg-white/80 backdrop-blur-xl border-r border-gray-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-40">
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-border">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
-            <span className="text-background text-sm font-semibold leading-none mt-px">P</span>
-          </div>
-          <span className="text-[15px] font-semibold tracking-tight text-foreground">
-            Privé<span className="font-normal text-muted">chauffeur</span>
-          </span>
+      <div className="h-[80px] flex items-center px-8 border-b border-gray-100/50">
+        <Link href="/dashboard" className="text-2xl font-[800] tracking-tight font-display text-black">
+          PrivéChauffeur
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
         {navigation.map(item => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`sidebar-item ${isActive ? "active" : ""}`}
+              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all ${
+                isActive 
+                  ? "bg-black text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)]" 
+                  : "text-gray-500 hover:text-black hover:bg-gray-100/50"
+              }`}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                 <path d={item.icon} />
               </svg>
               {item.name}
@@ -61,12 +60,12 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="p-3 border-t border-border">
+      <div className="p-4 border-t border-gray-100/50">
         <button
           onClick={handleLogout}
-          className="sidebar-item w-full hover:!text-error hover:!bg-error/5"
+          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl font-bold text-gray-500 transition-all hover:text-red-500 hover:bg-red-50"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
           </svg>
           Déconnexion

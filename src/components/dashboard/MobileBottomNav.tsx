@@ -15,25 +15,26 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-border z-50 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-16">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-gray-100/50 z-50 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_32px_rgba(0,0,0,0.02)]">
+      <div className="flex items-center justify-around h-20 px-2">
         {navigation.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
               href={item.href}
-              className="flex flex-col items-center justify-center flex-1 h-full"
+              className="flex flex-col items-center justify-center flex-1 h-full relative"
             >
-              <svg 
-                width="20" height="20" viewBox="0 0 24 24" fill="none" 
-                stroke="currentColor" strokeWidth={isActive ? "2.2" : "1.8"} 
-                strokeLinecap="round" strokeLinejoin="round"
-                className={isActive ? "text-foreground" : "text-muted"}
-              >
-                <path d={item.icon} />
-              </svg>
-              <span className={`text-[10px] mt-1 font-medium ${isActive ? "text-foreground" : "text-muted"}`}>
+              <div className={`p-2 rounded-xl transition-all duration-300 ${isActive ? "bg-black text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] -translate-y-1" : "text-gray-400 hover:text-black hover:bg-gray-50"}`}>
+                <svg 
+                  width="22" height="22" viewBox="0 0 24 24" fill="none" 
+                  stroke="currentColor" strokeWidth={isActive ? "2.5" : "2"} 
+                  strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d={item.icon} />
+                </svg>
+              </div>
+              <span className={`text-[10px] mt-1 font-bold transition-all ${isActive ? "text-black" : "text-gray-400"}`}>
                 {item.name}
               </span>
             </Link>
