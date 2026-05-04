@@ -74,6 +74,7 @@ export default function ProfilePage() {
       city: profile.city,
       bio: profile.bio,
       public_slug: profile.publicSlug,
+      profile_photo_url: profilePhoto || undefined, // Save base64 to DB
     });
 
     savePersistedProfile(profile, userId);

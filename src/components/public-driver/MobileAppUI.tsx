@@ -13,22 +13,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [sending, setSending] = useState(false);
-  const [localPhoto, setLocalPhoto] = useState<string | null>(null);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      if (!driver.profilePhotoUrl && driver.user_id) {
-        const savedPhoto = localStorage.getItem("privechauffeur_profile_photo_" + driver.user_id);
-        if (savedPhoto) setLocalPhoto(savedPhoto);
-      }
-    } catch (e) {
-      console.error("Local storage not available", e);
-    }
-  }, [driver]);
-
-  const photoSrc = localPhoto || driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
+  const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
 
   const cardBg = "bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
   const inputBg = "bg-white/5 backdrop-blur-md shadow-inner border border-white/5";
