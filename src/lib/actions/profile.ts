@@ -57,8 +57,10 @@ export async function updateDriverProfile(data: {
     }
 
     revalidatePath("/dashboard/profile");
+    revalidatePath("/", "layout");
     if (data.public_slug) {
       revalidatePath(`/chauffeur/${data.public_slug}`);
+      revalidatePath(`/chauffeur/${data.public_slug}`, "layout");
     }
     return { success: true };
   } catch (e) {

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { mockPublicDriver } from "@/lib/mockPublicDriver";
 import MobileAppUI from "@/components/public-driver/MobileAppUI";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicDriverPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
