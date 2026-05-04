@@ -3,24 +3,62 @@
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useState, useEffect } from "react";
 import { getPersistedProfile, savePersistedProfile, type DriverProfile, getPersistedPhoto, savePersistedPhoto } from "@/lib/mockProfile";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<DriverProfile | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>("default");
 
   // Load profile from localStorage on mount
   useEffect(() => {
-    setProfile(getPersistedProfile());
-    setProfilePhoto(getPersistedPhoto());
+    async function load() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        
+        // Load persisted data
+        const savedProfile = getPersistedProfile(user.id);
+        const savedPhoto = getPersistedPhoto(user.id);
+
+        // Check if we need to initialize from Supabase (first login)
+        if (!localStorage.getItem(`privechauffeur_driver_profile_${user.id}`)) {
+          const { data: dbProfile } = await supabase
+            .from("driver_profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .single();
+          
+          if (dbProfile) {
+            const initialProfile: DriverProfile = {
+              fullName: dbProfile.full_name || user.user_metadata?.full_name || "Chauffeur",
+              phone: dbProfile.phone || "",
+              whatsapp: dbProfile.phone || "",
+              city: dbProfile.city || "",
+              bio: dbProfile.bio || "Bienvenue !",
+              publicSlug: dbProfile.public_slug || "",
+            };
+            setProfile(initialProfile);
+            setProfilePhoto(null);
+            return;
+          }
+        }
+        
+        setProfile(savedProfile);
+        setProfilePhoto(savedPhoto);
+      }
+    }
+    load();
   }, []);
 
   const handleSave = () => {
     if (!profile) return;
     setSaving(true);
-    savePersistedProfile(profile);
+    savePersistedProfile(profile, userId);
     if (profilePhoto) {
-      savePersistedPhoto(profilePhoto);
+      savePersistedPhoto(profilePhoto, userId);
     }
     setTimeout(() => {
       setSaving(false);

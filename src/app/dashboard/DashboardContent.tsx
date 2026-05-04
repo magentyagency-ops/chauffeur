@@ -19,9 +19,25 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
     setIsActive(isAvailabilityActive(savedAvail));
     setTimeRemaining(getTimeRemaining(savedAvail.available_until));
 
-    const savedProfile = getPersistedProfile();
-    setProfile(savedProfile);
-  }, []);
+    const userId = user?.id || "default";
+    const savedProfile = getPersistedProfile(userId);
+    
+    // If we have a real profile from Supabase and no saved data in localStorage,
+    // we should use the Supabase data instead of the default "Jean" data.
+    if (initialProfile && !localStorage.getItem(`privechauffeur_driver_profile_${userId}`)) {
+      const mergedProfile: any = {
+        fullName: initialProfile.full_name || "",
+        phone: initialProfile.phone || "",
+        whatsapp: initialProfile.whatsapp || initialProfile.phone || "",
+        city: initialProfile.city || "",
+        bio: initialProfile.bio || "",
+        publicSlug: initialProfile.public_slug || "",
+      };
+      setProfile(mergedProfile);
+    } else {
+      setProfile(savedProfile);
+    }
+  }, [user, initialProfile]);
 
   useEffect(() => {
     const interval = setInterval(() => {
