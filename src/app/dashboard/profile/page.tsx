@@ -166,8 +166,10 @@ export default function ProfilePage() {
             
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center overflow-hidden whitespace-nowrap">
-                  {typeof window !== 'undefined' ? `${window.location.origin.replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
+                <div className="flex-1 bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center min-w-0 overflow-hidden">
+                  <span className="truncate">
+                    {typeof window !== 'undefined' ? `${window.location.origin.replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
+                  </span>
                 </div>
                 <button 
                   onClick={() => {
