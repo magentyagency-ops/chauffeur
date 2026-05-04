@@ -114,7 +114,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           )}
           
           {/* FORMULAIRE (FLOATING CARD) OU STATUT */}
-          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center overflow-hidden ${cardBg}`}>
+          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}>
             <AnimatePresence mode="wait">
               {!activeBookingId ? (
                 <motion.div 
@@ -267,7 +267,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                   key="status"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center py-6 px-4 text-center"
+                  className="flex flex-col items-center py-6 px-4 text-center overflow-hidden rounded-[2rem]"
                 >
                   {bookingStatus === "pending" ? (
                     <>
