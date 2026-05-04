@@ -25,27 +25,29 @@ export default function ProfilePage() {
         const savedProfile = getPersistedProfile(user.id);
         const savedPhoto = getPersistedPhoto(user.id);
 
-        // Check if we need to initialize from Supabase (first login)
-        if (!localStorage.getItem(`privechauffeur_driver_profile_${user.id}`)) {
-          const { data: dbProfile } = await supabase
-            .from("driver_profiles")
-            .select("*")
-            .eq("user_id", user.id)
-            .single();
-          
-          if (dbProfile) {
-            const initialProfile: DriverProfile = {
-              fullName: dbProfile.full_name || user.user_metadata?.full_name || "Chauffeur",
-              phone: dbProfile.phone || "",
-              whatsapp: dbProfile.phone || "",
-              city: dbProfile.city || "",
-              bio: dbProfile.bio || "Bienvenue !",
-              publicSlug: dbProfile.public_slug || "",
-            };
-            setProfile(initialProfile);
-            setProfilePhoto(null);
-            return;
+        // Always check Supabase for real data
+        const { data: dbProfile } = await supabase
+          .from("driver_profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (dbProfile) {
+          const initialProfile: DriverProfile = {
+            fullName: dbProfile.full_name || user.user_metadata?.full_name || "Chauffeur",
+            phone: dbProfile.phone || "",
+            whatsapp: dbProfile.whatsapp || dbProfile.phone || "",
+            city: dbProfile.city || "",
+            bio: dbProfile.bio || "Bienvenue !",
+            publicSlug: dbProfile.public_slug || "",
+          };
+          setProfile(initialProfile);
+          if (dbProfile.profile_photo_url) {
+            setProfilePhoto(dbProfile.profile_photo_url);
+          } else {
+            setProfilePhoto(savedPhoto);
           }
+          return;
         }
         
         setProfile(savedProfile);
