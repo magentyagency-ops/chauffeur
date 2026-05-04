@@ -132,7 +132,7 @@ export default function ProfilePage() {
       <main className="p-6 md:p-10 max-w-4xl mx-auto w-full space-y-10 pb-32">
         
         {/* QR Code & Link Sharing */}
-        <section className="bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-10">
+        <section className="bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-6 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10 overflow-hidden">
           <div className="shrink-0 space-y-4 text-center">
             <div className="w-40 h-40 bg-white p-4 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] mx-auto flex items-center justify-center border border-gray-100">
               <img 
@@ -156,7 +156,7 @@ export default function ProfilePage() {
             </button>
           </div>
           
-          <div className="flex-1 space-y-5 text-center md:text-left">
+          <div className="flex-1 space-y-5 text-center md:text-left min-w-0 w-full">
             <div>
               <h3 className="text-2xl font-[800] tracking-tight text-black font-display">Votre carte de visite</h3>
               <p className="text-gray-500 text-[15px] mt-2 font-medium">
@@ -166,8 +166,8 @@ export default function ProfilePage() {
             
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center min-w-0 overflow-hidden">
-                  <span className="truncate">
+                <div className="flex-1 bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center min-w-0">
+                  <span className="truncate w-full">
                     {typeof window !== 'undefined' ? `${window.location.origin.replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
                   </span>
                 </div>
