@@ -209,15 +209,29 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="label">WhatsApp (International format)</label>
-              <input 
-                type="text" 
-                value={profile.whatsapp} 
-                onChange={(e) => updateField("whatsapp", e.target.value)} 
-                className="input" 
-                placeholder="Ex: 33612345678"
-              />
+              <label className="label">Identifiant unique (Lien URL)</label>
+              <div className="flex gap-2">
+                <span className="input !bg-surface-alt flex items-center text-muted px-3 select-none">/chauffeur/</span>
+                <input 
+                  type="text" 
+                  value={profile.publicSlug} 
+                  onChange={(e) => updateField("publicSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} 
+                  className="input flex-1" 
+                  placeholder="votre-nom"
+                />
+              </div>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="label">WhatsApp (Format international)</label>
+            <input 
+              type="text" 
+              value={profile.whatsapp} 
+              onChange={(e) => updateField("whatsapp", e.target.value)} 
+              className="input" 
+              placeholder="Ex: 33612345678"
+            />
           </div>
 
           <div className="space-y-2">

@@ -10,6 +10,7 @@ import {
   VipSubscription,
   MarketingState
 } from "@/lib/mockMarketing";
+import { getPersistedProfile, type DriverProfile } from "@/lib/mockProfile";
 
 const TABS = [
   { id: "promos", label: "Codes Promo & Offres" },
@@ -20,9 +21,11 @@ const TABS = [
 export default function MarketingPage() {
   const [activeTab, setActiveTab] = useState("promos");
   const [state, setState] = useState<MarketingState | null>(null);
+  const [profile, setProfile] = useState<DriverProfile | null>(null);
 
   useEffect(() => {
     setState(getMarketingState());
+    setProfile(getPersistedProfile());
   }, []);
 
   const updateState = (newState: MarketingState) => {
@@ -74,14 +77,14 @@ export default function MarketingPage() {
             <div className="shrink-0 space-y-4 text-center">
               <div className="w-48 h-48 bg-white p-4 rounded-2xl shadow-xl mx-auto flex items-center justify-center">
                 <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/jean-dupont` : '')}`} 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/${profile?.publicSlug || 'jean-dupont'}` : '')}`} 
                   alt="QR Code"
                   className="w-full h-full"
                 />
               </div>
               <button 
                 onClick={() => {
-                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/chauffeur/jean-dupont')}`;
+                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/chauffeur/' + (profile?.publicSlug || 'jean-dupont'))}`;
                   const link = document.createElement('a');
                   link.href = url;
                   link.download = 'qrcode-privechauffeur.png';
@@ -105,12 +108,12 @@ export default function MarketingPage() {
                   <input 
                     type="text" 
                     readOnly 
-                    value={typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/jean-dupont` : ''} 
+                    value={typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/${profile?.publicSlug || 'jean-dupont'}` : ''} 
                     className="input flex-1 !bg-surface !border-border text-[13px]" 
                   />
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText(window.location.origin + '/chauffeur/jean-dupont');
+                      navigator.clipboard.writeText(window.location.origin + '/chauffeur/' + (profile?.publicSlug || 'jean-dupont'));
                       alert("Lien copié !");
                     }}
                     className="btn-primary !py-2 !px-4 !text-[12px]"
