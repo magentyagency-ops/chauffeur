@@ -164,7 +164,15 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                               setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
                             }
                           },
-                          () => { setPickup(""); alert("Veuillez autoriser la géolocalisation."); }
+                          (error) => { 
+                            setPickup(""); 
+                            if (error.code === 1) {
+                              alert("La géolocalisation est bloquée. Veuillez l'autoriser dans les réglages de votre navigateur ou de votre téléphone.");
+                            } else {
+                              alert("Impossible de vous localiser. Vérifiez votre connexion GPS.");
+                            }
+                          },
+                          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                         );
                       }
                     }}
