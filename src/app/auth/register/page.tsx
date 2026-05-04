@@ -176,139 +176,162 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="card p-8 md:p-12 animate-fade-up max-w-lg w-full mx-auto">
-      <div className="text-center mb-10">
-        <h1 className="display text-3xl font-medium text-foreground mb-3">
-          Devenez Chauffeur Privé.
+    <div className="glass rounded-2xl p-8 animate-scale-in">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Créez votre espace chauffeur
         </h1>
-        <p className="text-text-muted text-sm font-medium">
-          Rejoignez une communauté de chauffeurs indépendants et premium.
+        <p className="text-text-muted text-sm">
+          Rejoignez +500 chauffeurs indépendants
         </p>
       </div>
 
       {globalError && (
-        <div className="mb-8 p-4 rounded-xl bg-red-50 text-red-600 text-xs font-bold border border-red-100 flex items-start gap-3">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="shrink-0 mt-0.5">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 mt-0.5">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
           </svg>
           {globalError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {fields.map((field) => (
-            <div key={field.id} className={field.id === 'email' ? 'sm:col-span-2' : ''}>
-              <label
-                htmlFor={field.id}
-                className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2"
-              >
-                {field.label}
-              </label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {fields.map((field) => (
+          <div key={field.id}>
+            <label
+              htmlFor={field.id}
+              className="block text-sm font-medium text-text-secondary mb-1.5"
+            >
+              {field.label}
+            </label>
+            <div className="relative">
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                {field.icon}
+              </div>
               <input
                 id={field.id}
                 type={field.type}
                 value={form[field.id as keyof typeof form]}
                 onChange={(e) => updateField(field.id, e.target.value)}
                 placeholder={field.placeholder}
-                className={`w-full px-4 py-3.5 rounded-xl bg-surface-light border text-foreground text-sm font-medium placeholder:text-text-muted/40 focus:outline-none focus:ring-2 focus:ring-foreground/5 focus:border-foreground/10 transition-all duration-300 ${
+                className={`w-full pl-11 pr-4 py-3 rounded-xl bg-surface border text-foreground text-sm placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300 ${
                   errors[field.id]
                     ? "border-red-500/40"
                     : "border-surface-border"
                 }`}
               />
-              {errors[field.id] && (
-                <p className="text-red-500 text-[10px] font-bold mt-1.5 flex items-center gap-1 uppercase tracking-wider">
-                  {errors[field.id]}
-                </p>
-              )}
             </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">
-              Mot de passe
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => updateField("password", e.target.value)}
-                placeholder="••••••••"
-                className={`w-full px-4 py-3.5 rounded-xl bg-surface-light border text-foreground text-sm font-medium placeholder:text-text-muted/40 focus:outline-none focus:ring-2 focus:ring-foreground/5 focus:border-foreground/10 transition-all duration-300 ${
-                  errors.password ? "border-red-500/40" : "border-surface-border"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
-              >
-                {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-[10px] font-bold mt-1.5 uppercase tracking-wider">
-                {errors.password}
+            {errors[field.id] && (
+              <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {errors[field.id]}
               </p>
             )}
           </div>
+        ))}
 
-          {/* Confirm password */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">
-              Confirmation
-            </label>
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1.5">
+            Mot de passe
+          </label>
+          <div className="relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={(e) => updateField("password", e.target.value)}
+              placeholder="Minimum 8 caractères"
+              className={`w-full pl-11 pr-12 py-3 rounded-xl bg-surface border text-foreground text-sm placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300 ${
+                errors.password ? "border-red-500/40" : "border-surface-border"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
+            >
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              )}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {errors.password}
+            </p>
+          )}
+        </div>
+
+        {/* Confirm password */}
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-1.5">
+            Confirmer le mot de passe
+          </label>
+          <div className="relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+            </div>
             <input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
               value={form.confirmPassword}
               onChange={(e) => updateField("confirmPassword", e.target.value)}
-              placeholder="••••••••"
-              className={`w-full px-4 py-3.5 rounded-xl bg-surface-light border text-foreground text-sm font-medium placeholder:text-text-muted/40 focus:outline-none focus:ring-2 focus:ring-foreground/5 focus:border-foreground/10 transition-all duration-300 ${
+              placeholder="Répétez le mot de passe"
+              className={`w-full pl-11 pr-4 py-3 rounded-xl bg-surface border text-foreground text-sm placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300 ${
                 errors.confirmPassword
                   ? "border-red-500/40"
                   : "border-surface-border"
               }`}
             />
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-[10px] font-bold mt-1.5 uppercase tracking-wider">
-                {errors.confirmPassword}
-              </p>
-            )}
           </div>
+          {errors.confirmPassword && (
+            <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {errors.confirmPassword}
+            </p>
+          )}
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="btn-black w-full !py-4 text-base font-bold !mt-10 shadow-lg"
+          className="btn-primary w-full justify-center !py-3.5 !mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Création en cours..." : "Lancer mon activité"}
+          {loading ? (
+            <>
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              <span>Création en cours...</span>
+            </>
+          ) : (
+            <>
+              <span>Créer mon espace chauffeur</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </>
+          )}
         </button>
       </form>
 
-      <div className="mt-10 pt-8 border-t border-surface-border text-center">
-        <p className="text-sm text-text-muted font-medium">
-          Déjà un compte ?{" "}
-          <a
-            href="/auth/login"
-            className="text-foreground hover:text-primary transition-colors font-bold"
-          >
-            Se connecter
-          </a>
-        </p>
-      </div>
+      {/* Link to login */}
+      <p className="mt-6 text-center text-sm text-text-muted">
+        Déjà un compte ?{" "}
+        <a
+          href="/auth/login"
+          className="text-primary hover:text-primary-light transition-colors font-medium"
+        >
+          Se connecter
+        </a>
+      </p>
     </div>
-  );
-}
   );
 }
