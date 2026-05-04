@@ -4,6 +4,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useState, useEffect } from "react";
 import { getPersistedProfile, savePersistedProfile, type DriverProfile, getPersistedPhoto, savePersistedPhoto } from "@/lib/mockProfile";
 import { createClient } from "@/lib/supabase/client";
+import { updateDriverProfile } from "@/lib/actions/profile";
 
 export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
@@ -61,17 +62,31 @@ export default function ProfilePage() {
     }
   }, [profile?.publicSlug]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
+    
+    // Sync to Supabase
+    const result = await updateDriverProfile({
+      full_name: profile.fullName,
+      phone: profile.phone,
+      whatsapp: profile.whatsapp,
+      city: profile.city,
+      bio: profile.bio,
+      public_slug: profile.publicSlug,
+    });
+
     savePersistedProfile(profile, userId);
     if (profilePhoto) {
       savePersistedPhoto(profilePhoto, userId);
     }
-    setTimeout(() => {
-      setSaving(false);
+    
+    setSaving(false);
+    if (result.success) {
       alert("Profil enregistré avec succès !");
-    }, 800);
+    } else {
+      alert("Erreur lors de l'enregistrement en base de données : " + result.error);
+    }
   };
 
   const updateField = (field: keyof DriverProfile, value: string) => {

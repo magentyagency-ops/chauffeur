@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { mockAvailability, isAvailabilityActive, getTimeRemaining, getPersistedAvailability, savePersistedAvailability } from "@/lib/mockAvailability";
 import { getDriverBookings } from "@/lib/actions/bookings";
+import { updateDriverAvailability } from "@/lib/actions/profile";
 import { getPersistedProfile } from "@/lib/mockProfile";
 import Link from "next/link";
 
@@ -47,14 +48,15 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
     return () => clearInterval(interval);
   }, [availability]);
 
-  function disableAvailability() {
+  async function disableAvailability() {
     const newAvail = { ...availability, is_available: false };
     setAvailability(newAvail);
     savePersistedAvailability(newAvail);
     setIsActive(false);
+    await updateDriverAvailability(false);
   }
 
-  function enableAvailability() {
+  async function enableAvailability() {
     const now = new Date();
     const availableUntil = new Date(now.getTime() + 8 * 60 * 60 * 1000); // +8h default
     const newAvail = { 
@@ -65,6 +67,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
     setAvailability(newAvail);
     savePersistedAvailability(newAvail);
     setIsActive(true);
+    await updateDriverAvailability(true);
   }
 
   const [bookings, setBookings] = useState<any[]>([]);
