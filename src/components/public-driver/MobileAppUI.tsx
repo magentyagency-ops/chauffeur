@@ -217,26 +217,20 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                 )}
               </div>
             )}
-          </motion.div>
+          </div>
 
           {/* CTA BOUTON */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex"
-          >
-            <motion.button 
-              whileTap={{ scale: 0.98 }}
+          <div className="flex animate-in slide-in-from-bottom-4 fade-in duration-700 delay-500 fill-mode-both">
+            <button 
               onClick={handleSubmit}
               disabled={sending}
-              className={`w-full flex items-center justify-center gap-2 py-4 rounded-full font-bold text-black transition-all ${
+              className={`w-full flex items-center justify-center gap-2 py-4 rounded-full font-bold text-black transition-all active:scale-[0.98] ${
                 sending ? "bg-gray-400 cursor-not-allowed" : `${whiteBtn} hover:brightness-110 hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]`
               }`}
             >
               {sending ? "Envoi..." : "Confirmer la course"}
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
 
         </div>
 
