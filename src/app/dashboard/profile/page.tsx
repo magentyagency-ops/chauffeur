@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<DriverProfile | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("default");
+  const [qrUrl, setQrUrl] = useState<string>("");
 
   // Load profile from localStorage on mount
   useEffect(() => {
@@ -52,6 +53,13 @@ export default function ProfilePage() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && profile?.publicSlug) {
+      const url = `${window.location.origin}/chauffeur/${profile.publicSlug}`;
+      setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`);
+    }
+  }, [profile?.publicSlug]);
 
   const handleSave = () => {
     if (!profile) return;
@@ -135,11 +143,15 @@ export default function ProfilePage() {
         <section className="bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-6 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10 overflow-hidden">
           <div className="shrink-0 space-y-4 text-center">
             <div className="w-40 h-40 bg-white p-4 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.08)] mx-auto flex items-center justify-center border border-gray-100">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/${profile.publicSlug}` : '')}`} 
-                alt="QR Code"
-                className="w-full h-full rounded-lg"
-              />
+              {qrUrl ? (
+                <img 
+                  src={qrUrl} 
+                  alt="QR Code"
+                  className="w-full h-full rounded-lg"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-50 animate-pulse rounded-lg" />
+              )}
             </div>
             <button 
               onClick={() => {
