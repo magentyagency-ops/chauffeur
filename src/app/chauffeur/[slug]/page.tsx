@@ -1,3 +1,5 @@
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import { mockPublicDriver } from "@/lib/mockPublicDriver";
 import DriverHero from "@/components/public-driver/DriverHero";
 import AvailabilityCard from "@/components/public-driver/AvailabilityCard";
@@ -7,16 +9,39 @@ import ReviewsSection from "@/components/public-driver/ReviewsSection";
 import LoyaltyBanner from "@/components/public-driver/LoyaltyBanner";
 import BookingCTA from "@/components/public-driver/BookingCTA";
 
-// Hidden for now — will be re-added later:
-// import ServicesSection from "@/components/public-driver/ServicesSection";
-// import VehicleSection from "@/components/public-driver/VehicleSection";
-// import TrustSection from "@/components/public-driver/TrustSection";
-// import FAQSection from "@/components/public-driver/FAQSection";
-// import ServiceAreaSection from "@/components/public-driver/ServiceAreaSection";
-
 export default async function PublicDriverPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const driver = mockPublicDriver;
+
+  // Fetch real driver profile from Supabase
+  const supabase = await createClient();
+  const { data: dbProfile } = await supabase
+    .from("driver_profiles")
+    .select("*")
+    .eq("public_slug", slug)
+    .single();
+
+  if (!dbProfile) {
+    notFound();
+  }
+
+  // Build the driver object from real DB data, with mock fallbacks for non-DB fields
+  const driver = {
+    ...mockPublicDriver,
+    // Override with real data from DB
+    id: dbProfile.id,
+    slug: dbProfile.public_slug,
+    publicName: dbProfile.full_name,
+    firstName: dbProfile.full_name?.split(" ")[0] || "Chauffeur",
+    city: dbProfile.city || mockPublicDriver.city,
+    shortDescription: dbProfile.bio || `Chauffeur privé à ${dbProfile.city || "votre service"}. Réservez votre course en toute simplicité.`,
+    phone: dbProfile.phone || mockPublicDriver.phone,
+    whatsapp: dbProfile.whatsapp || dbProfile.phone || mockPublicDriver.whatsapp,
+    profilePhotoUrl: dbProfile.profile_photo_url || null,
+    vehicle: {
+      ...mockPublicDriver.vehicle,
+      model: dbProfile.vehicle_model || mockPublicDriver.vehicle.model,
+    },
+  };
 
   return (
     <main className="max-w-xl mx-auto px-4 sm:px-6 pb-32 pt-8 space-y-10">

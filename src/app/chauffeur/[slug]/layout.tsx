@@ -1,4 +1,5 @@
-import { mockPublicDriver } from "@/lib/mockPublicDriver";
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 
 export default async function PublicDriverLayout({
@@ -9,7 +10,20 @@ export default async function PublicDriverLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const driver = mockPublicDriver;
+
+  // Fetch real driver name from Supabase
+  const supabase = await createClient();
+  const { data: dbProfile } = await supabase
+    .from("driver_profiles")
+    .select("full_name, public_slug")
+    .eq("public_slug", slug)
+    .single();
+
+  if (!dbProfile) {
+    notFound();
+  }
+
+  const driverName = dbProfile.full_name || "Chauffeur";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -21,7 +35,7 @@ export default async function PublicDriverLayout({
               <span className="text-background text-sm font-semibold leading-none mt-px">P</span>
             </div>
             <span className="text-[15px] font-semibold tracking-tight">
-              {driver.publicName || driver.firstName}
+              {driverName}
             </span>
           </div>
           <a href="#booking-form" className="btn-primary !py-2 !px-5 !text-[13px]">
