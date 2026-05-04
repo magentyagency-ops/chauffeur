@@ -47,41 +47,41 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     }
   };
 
-  // REAL-TIME SUBSCRIPTION + POLLING FALLBACK
+  // STATUS TRACKING (Realtime + Polling fallback)
   useEffect(() => {
-    if (!activeBookingId || bookingStatus === "accepted") return;
+    if (!activeBookingId) return;
+    if (bookingStatus === "accepted") return;
 
+    // 1. Polling every 2 seconds for maximum reactivity
+    const interval = setInterval(async () => {
+      try {
+        const latestStatus = await getBookingStatus(activeBookingId);
+        if (latestStatus && latestStatus !== bookingStatus) {
+          setBookingStatus(latestStatus);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 2000);
+
+    // 2. Realtime subscription
     const supabase = createClient();
-    
-    // 1. Realtime
     const channel = supabase
-      .channel(`booking-${activeBookingId}`)
+      .channel(`booking-updates-${activeBookingId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bookings',
-          filter: `id=eq.${activeBookingId}`,
-        },
+        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${activeBookingId}` },
         (payload) => {
-          const newStatus = payload.new.status;
-          if (newStatus) setBookingStatus(newStatus);
+          if (payload.new.status && payload.new.status !== bookingStatus) {
+            setBookingStatus(payload.new.status);
+          }
         }
       )
       .subscribe();
 
-    // 2. Polling Fallback (every 3 seconds)
-    const interval = setInterval(async () => {
-      const latestStatus = await getBookingStatus(activeBookingId);
-      if (latestStatus && latestStatus !== bookingStatus) {
-        setBookingStatus(latestStatus);
-      }
-    }, 3000);
-
     return () => {
-      supabase.removeChannel(channel);
       clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [activeBookingId, bookingStatus]);
 
