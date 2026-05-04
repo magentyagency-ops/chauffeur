@@ -86,9 +86,10 @@ export default function ProfilePage() {
     
     setSaving(false);
     if (result.success) {
-      alert("Profil enregistré avec succès !");
+      alert("Profil enregistré avec succès dans la base de données !");
     } else {
-      alert("Erreur lors de l'enregistrement en base de données : " + result.error);
+      console.error("Save error details:", result.error);
+      alert("Erreur lors de l'enregistrement : " + (result.error || "Problème de connexion"));
     }
   };
 
