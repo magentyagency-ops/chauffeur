@@ -37,33 +37,33 @@ export default function FAQSection() {
   };
 
   return (
-    <section id="faq" className="scroll-mt-28 space-y-8">
+    <section id="faq" className="scroll-mt-28 space-y-12 animate-fade-up">
       <div>
-        <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight mb-2">Questions fréquentes</h2>
-        <p className="text-text-muted font-medium">Tout ce que vous devez savoir avant de réserver.</p>
+        <h2 className="display text-3xl md:text-4xl font-medium text-foreground tracking-tight mb-3">Questions fréquentes</h2>
+        <p className="text-text-muted font-medium text-lg italic display">Tout ce que vous devez savoir avant de réserver.</p>
       </div>
 
-      <div className="glass rounded-[2rem] border border-surface-border overflow-hidden divide-y divide-surface-border">
+      <div className="card !p-0 border-surface-border overflow-hidden divide-y divide-surface-border">
         {faqs.map((faq, i) => (
-          <div key={i}>
+          <div key={i} className="group">
             <button
               onClick={() => toggle(i)}
-              className="w-full flex items-center justify-between gap-4 px-6 md:px-8 py-5 md:py-6 text-left transition-colors hover:bg-surface-light/50 active:bg-surface-light"
+              className="w-full flex items-center justify-between gap-6 px-8 py-6 text-left transition-colors hover:bg-surface-light"
             >
-              <span className="text-base font-bold text-foreground leading-snug pr-4">{faq.q}</span>
-              <div className={`w-8 h-8 rounded-full bg-surface border border-surface-border flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                openIndex === i ? "rotate-45 bg-primary/10 border-primary/20" : ""
+              <span className="display text-lg md:text-xl font-medium text-foreground/80 group-hover:text-foreground transition-colors leading-snug pr-4">{faq.q}</span>
+              <div className={`w-8 h-8 rounded-full border border-surface-border flex items-center justify-center shrink-0 transition-all duration-500 ${
+                openIndex === i ? "rotate-45 bg-foreground border-foreground text-background" : "text-text-muted"
               }`}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-colors ${openIndex === i ? "text-primary" : "text-text-muted"}`}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </div>
             </button>
             
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
               openIndex === i ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
             }`}>
-              <div className="px-6 md:px-8 pb-6 text-sm md:text-base font-medium text-text-muted leading-relaxed">
+              <div className="px-8 pb-8 text-base font-medium text-text-muted leading-relaxed max-w-3xl">
                 {faq.a}
               </div>
             </div>

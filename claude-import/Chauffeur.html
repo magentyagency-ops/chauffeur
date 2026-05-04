@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PrivéChauffeur — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-family: 'Inter', -apple-system, sans-serif; }
+  body { background: #fafaf7; color: #0a0a0a; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  ::selection { background: #0a0a0a; color: #fafaf7; }
+  .display { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-variation-settings: "SOFT" 50; font-feature-settings: 'ss01', 'ss02'; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── TWEAK DEFAULTS ───────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#276EF1",
+  "greenColor": "#06C167",
+  "darkMode": false,
+  "driverName": "Jean Dupont",
+  "fontSize": 15,
+  "available": true
+}/*EDITMODE-END*/;
+
+// ─── LOCAL useTweaks wrapper ──────────────────────────────────────────────────
+// tweaks-panel.jsx exposes useTweaks([values, setTweak]) but we use a richer
+// destructuring API internally. This shim bridges the two.
+function useAppTweaks(defaults) {
+  const [tweaks, setTweakRaw] = window.useTweaks(defaults);
+  const setTweak = (key, val) => setTweakRaw(key, val);
+  return {
+    tweaks,
+    setTweak,
+    TweaksPanel: window.TweaksPanel,
+    TweakSection: window.TweakSection,
+    TweakSlider: window.TweakSlider,
+    TweakToggle: window.TweakToggle,
+    TweakText: window.TweakText,
+    TweakColor: window.TweakColor,
+    TweakRadio: window.TweakRadio,
+    TweakSelect: window.TweakSelect,
+  };
+}
+
+// ─── MOCK DATA ────────────────────────────────────────────────────────────────
+const BOOKINGS = [
+  { id: "b1", client: "Sophie Martin", pickup: "CDG Terminal 2E", dropoff: "Hôtel Ritz, Paris", time: "14:30", date: "Aujourd'hui", status: "pending", price: 85 },
+  { id: "b2", client: "Marc Dubreuil", pickup: "Gare de Lyon", dropoff: "La Défense", time: "17:00", date: "Aujourd'hui", status: "confirmed", price: 65 },
+  { id: "b3", client: "Emma Leroy", pickup: "Versailles", dropoff: "Aéroport Orly", time: "09:00", date: "Demain", status: "confirmed", price: 90 },
+];
+const CLIENTS = [
+  { id: "c1", name: "Sophie Martin", trips: 12, tag: "VIP", phone: "+33 6 98 76 54 32", initial: "S" },
+  { id: "c2", name: "Marc Dubreuil", trips: 5, tag: "Régulier", phone: "+33 6 11 22 33 44", initial: "M" },
+  { id: "c3", name: "Emma Leroy", trips: 1, tag: "Nouveau", phone: "+33 6 55 44 33 22", initial: "E" },
+  { id: "c4", name: "Thomas Dubois", trips: 8, tag: "Régulier", phone: "+33 6 77 88 99 00", initial: "T" },
+];
+
+// ─── ICONS ────────────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 20, stroke = "currentColor", sw = 2, fill = "none", ...p }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" {...p}>
+    {Array.isArray(d) ? d.map((path, i) => <path key={i} d={path} />) : <path d={d} />}
+  </svg>
+);
+
+// ─── GLOBAL STYLES INJECTOR ───────────────────────────────────────────────────
+function GlobalStyles({ tweaks }) {
+  const accent = tweaks.accentColor;
+  const green = tweaks.greenColor;
+  const dark = tweaks.darkMode;
+  const bg = dark ? "#0a0a0a" : "#fafaf7";
+  const surface = dark ? "#141414" : "#ffffff";
+  const surface2 = dark ? "#1c1c1c" : "#f0efea";
+  const border = dark ? "#262626" : "#e6e4dd";
+  const text = dark ? "#fafaf7" : "#0a0a0a";
+  const muted = dark ? "#8a8a85" : "#73726c";
+
+  useEffect(() => {
+    document.body.style.background = bg;
+    document.body.style.color = text;
+  }, [bg, text]);
+
+  return (
+    <style>{`
+      :root {
+        --bg: ${bg};
+        --surface: ${surface};
+        --surface2: ${surface2};
+        --border: ${border};
+        --text: ${text};
+        --muted: ${muted};
+        --accent: ${accent};
+        --green: ${green};
+        --fs: ${tweaks.fontSize}px;
+      }
+      body { font-size: var(--fs); background: var(--bg); color: var(--text); }
+
+      /* ─── MOTION SYSTEM ──────────────────────────────────────────────── */
+      :root {
+        --ease-out:    cubic-bezier(.16, 1, .3, 1);    /* Linear-style swift-out */
+        --ease-spring: cubic-bezier(.34, 1.56, .64, 1); /* Bouncy */
+        --ease-smooth: cubic-bezier(.4, 0, .2, 1);     /* Material smooth */
+        --ease-soft:   cubic-bezier(.25, .8, .25, 1);  /* Apple-ish */
+        --d-fast:   .18s;
+        --d-base:   .32s;
+        --d-slow:   .55s;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: .01ms !important;
+        }
+      }
+
+      .btn-black {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: #0a0a0a; color: #fff;
+        font-weight: 700; font-size: 15px; padding: 14px 28px; border-radius: 10px;
+        border: none; cursor: pointer;
+        transition: transform var(--d-fast) var(--ease-spring), box-shadow var(--d-base) var(--ease-out), opacity var(--d-fast) var(--ease-out);
+        font-family: inherit; letter-spacing: -.01em;
+        box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.12);
+        will-change: transform;
+      }
+      .btn-black:hover { opacity: .92; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,.15), 0 12px 28px rgba(0,0,0,.18); }
+      .btn-black:active { transform: translateY(0) scale(.97); transition-duration: .08s; }
+      .btn-black svg { transition: transform var(--d-base) var(--ease-spring); }
+      .btn-black:hover svg { transform: translateX(3px); }
+
+      .btn-ghost {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: var(--surface); color: var(--text);
+        font-weight: 600; font-size: 15px; padding: 14px 28px; border-radius: 10px;
+        border: 1.5px solid var(--border); cursor: pointer;
+        transition: transform var(--d-fast) var(--ease-spring), background var(--d-base) var(--ease-out), box-shadow var(--d-base) var(--ease-out), border-color var(--d-base) var(--ease-out);
+        font-family: inherit;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      }
+      .btn-ghost:hover { background: var(--surface2); border-color: #d0d0d6; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+      .btn-ghost:active { transform: translateY(0) scale(.97); transition-duration: .08s; }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+        transition: transform var(--d-base) var(--ease-out), border-color var(--d-base) var(--ease-out), box-shadow var(--d-base) var(--ease-out);
+      }
+      .card.hoverable:hover {
+        border-color: #d0d0d6;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.08);
+      }
+
+      input, textarea, select {
+        background: var(--surface2);
+        border: 1.5px solid var(--border);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-family: inherit;
+        width: 100%;
+        outline: none;
+        transition: border-color var(--d-base) var(--ease-out), background var(--d-base) var(--ease-out), box-shadow var(--d-base) var(--ease-out);
+      }
+      input:focus, textarea:focus, select:focus {
+        border-color: var(--accent);
+        background: var(--surface);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+      }
+      input::placeholder, textarea::placeholder { color: var(--muted); }
+
+      /* ─── KEYFRAMES ──────────────────────────────────────────────────── */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(24px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-24px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes scaleIn {
+        from { opacity: 0; transform: scale(.92); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%      { transform: scale(1.15); opacity: .8; }
+      }
+      @keyframes ringPulse {
+        0%   { transform: scale(.9); opacity: .8; }
+        100% { transform: scale(2.2); opacity: 0; }
+      }
+      @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      @keyframes successPop {
+        0%   { transform: scale(0) rotate(-180deg); opacity: 0; }
+        50%  { transform: scale(1.15) rotate(0deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      @keyframes checkDraw {
+        from { stroke-dashoffset: 30; }
+        to   { stroke-dashoffset: 0; }
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .fade-up   { animation: fadeUp var(--d-slow) var(--ease-out) both; }
+      .fade-in   { animation: fadeIn var(--d-base) var(--ease-out) both; }
+      .slide-in-right { animation: slideInRight var(--d-base) var(--ease-out) both; }
+      .slide-in-left  { animation: slideInLeft  var(--d-base) var(--ease-out) both; }
+      .scale-in  { animation: scaleIn var(--d-base) var(--ease-spring) both; }
+      .stagger > * { animation: fadeUp var(--d-slow) var(--ease-out) both; }
+      .stagger > *:nth-child(1) { animation-delay: .04s; }
+      .stagger > *:nth-child(2) { animation-delay: .10s; }
+      .stagger > *:nth-child(3) { animation-delay: .16s; }
+      .stagger > *:nth-child(4) { animation-delay: .22s; }
+      .stagger > *:nth-child(5) { animation-delay: .28s; }
+      .stagger > *:nth-child(6) { animation-delay: .34s; }
+      .stagger > *:nth-child(7) { animation-delay: .40s; }
+      .stagger > *:nth-child(8) { animation-delay: .46s; }
+
+      /* Pulsing dot for live status */
+      .live-dot { position: relative; }
+      .live-dot::after {
+        content: ""; position: absolute; inset: 0; border-radius: 50%;
+        background: inherit; animation: ringPulse 2s var(--ease-out) infinite;
+      }
+
+      .nav-link {
+        color: var(--muted); font-size: 14px; font-weight: 500;
+        text-decoration: none; cursor: pointer; position: relative;
+        transition: color var(--d-fast) var(--ease-out);
+      }
+      .nav-link::after {
+        content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px;
+        background: currentColor; border-radius: 1px;
+        transform: scaleX(0); transform-origin: left;
+        transition: transform var(--d-base) var(--ease-out);
+      }
+      .nav-link:hover { color: var(--text); }
+      .nav-link:hover::after { transform: scaleX(1); }
+      .nav-link.active { color: var(--text); }
+
+      .tag-vip    { background: rgba(255,180,0,.12); color: #ffb400; border: 1px solid rgba(255,180,0,.25); }
+      .tag-reg    { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+      .tag-new    { background: rgba(6,193,103,.1); color: var(--green); border: 1px solid rgba(6,193,103,.25); }
+      .tag        { border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+
+      .sidebar-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 12px; border-radius: 9px; cursor: pointer;
+        font-size: 14px; font-weight: 500; color: var(--muted);
+        text-decoration: none;
+        border: 1px solid transparent;
+        position: relative; overflow: hidden;
+        transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), padding var(--d-base) var(--ease-spring);
+      }
+      .sidebar-item svg { transition: transform var(--d-base) var(--ease-spring); }
+      .sidebar-item:hover { background: var(--surface2); color: var(--text); padding-left: 16px; }
+      .sidebar-item:hover svg { transform: scale(1.1); }
+      .sidebar-item.active { background: var(--surface2); color: var(--text); border-color: var(--border); font-weight: 600; }
+      .sidebar-item.active::before {
+        content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+        background: var(--accent); border-radius: 2px;
+        animation: scaleIn var(--d-base) var(--ease-spring);
+      }
+
+      .stat-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 14px; padding: 20px 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.03);
+      }
+
+      .booking-row {
+        display: flex; align-items: center; gap: 16px;
+        padding: 18px 20px; border-bottom: 1px solid var(--border);
+        cursor: pointer; position: relative;
+        transition: background var(--d-fast) var(--ease-out), padding var(--d-base) var(--ease-spring);
+      }
+      .booking-row::before {
+        content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+        background: var(--accent); transform: scaleY(0); transform-origin: center;
+        transition: transform var(--d-base) var(--ease-spring);
+      }
+      .booking-row:last-child { border-bottom: none; }
+      .booking-row:hover { background: var(--surface2); padding-left: 26px; }
+      .booking-row:hover::before { transform: scaleY(1); }
+
+      .step-dot {
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 700; flex-shrink: 0;
+      }
+
+      .pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 100px;
+        font-size: 13px; font-weight: 600;
+        transition: all var(--d-base) var(--ease-out);
+      }
+      .pill:hover { transform: translateY(-1px); }
+
+      /* Number ticker */
+      .ticker { display: inline-block; }
+
+      /* Skeleton shimmer */
+      .shimmer {
+        background: linear-gradient(90deg, var(--surface2) 25%, color-mix(in srgb, var(--surface2) 50%, var(--surface)) 50%, var(--surface2) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.6s linear infinite;
+      }
+
+      /* Tab indicator */
+      .tab-content { animation: fadeIn var(--d-base) var(--ease-out) both; }
+    `}</style>
+  );
+}
+
+// ─── ANIMATION HOOKS ──────────────────────────────────────────────────────────
+function useReveal(threshold = 0.12) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setShown(true); io.disconnect(); }
+    }, { threshold, rootMargin: "-30px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return [ref, shown];
+}
+
+function Reveal({ children, delay = 0, className = "", style = {}, ...rest }) {
+  const [ref, shown] = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity .85s ${delay}s var(--ease-out), transform .85s ${delay}s var(--ease-out)`,
+        willChange: "transform, opacity",
+        ...style,
+      }}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+}
+
+function useCountUp(target, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let raf, start;
+    const num = parseFloat(target);
+    if (isNaN(num)) { setVal(target); return; }
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    const step = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      setVal(Math.round(num * ease(p) * 100) / 100);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+function AnimatedNumber({ value, suffix = "", prefix = "" }) {
+  const num = parseFloat(String(value).replace(/[^0-9.]/g, ""));
+  const animated = useCountUp(num, 1100);
+  const display = isNaN(num) ? value : Math.round(animated);
+  return <span className="ticker">{prefix}{display}{suffix}</span>;
+}
+
+function ScreenSwitch({ screenKey, children }) {
+  const [current, setCurrent] = useState({ key: screenKey, content: children });
+  const [animating, setAnimating] = useState(false);
+  useEffect(() => {
+    if (current.key === screenKey) {
+      setCurrent({ key: screenKey, content: children });
+      return;
+    }
+    setAnimating(true);
+    const t = setTimeout(() => {
+      setCurrent({ key: screenKey, content: children });
+      setAnimating(false);
+    }, 220);
+    return () => clearTimeout(t);
+  }, [screenKey, children]);
+  return (
+    <div style={{
+      opacity: animating ? 0 : 1,
+      transform: animating ? "scale(.985) translateY(8px)" : "scale(1) translateY(0)",
+      transition: "opacity .22s var(--ease-out), transform .35s var(--ease-out)",
+      transformOrigin: "center top",
+      minHeight: "100vh",
+    }}>
+      {current.content}
+    </div>
+  );
+}
+
+// ─── APP SHELL ────────────────────────────────────────────────────────────────
+function App() {
+  const { tweaks, setTweak, TweaksPanel, TweakSection, TweakColor, TweakToggle, TweakText, TweakSlider } = useAppTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = useState("landing");
+  const [dashTab, setDashTab] = useState("home");
+
+  const screenContent = (
+    screen === "landing"   ? <LandingPage tweaks={tweaks} onGoToDash={() => setScreen("dashboard")} onGoToBooking={() => setScreen("booking")} />
+  : screen === "dashboard" ? <Dashboard tweaks={tweaks} tab={dashTab} setTab={setDashTab} onBack={() => setScreen("landing")} />
+  :                          <BookingPage tweaks={tweaks} onBack={() => setScreen("landing")} />
+  );
+
+  return (
+    <>
+      <GlobalStyles tweaks={tweaks} />
+      <ScreenSwitch screenKey={screen}>{screenContent}</ScreenSwitch>
+
+      {/* Tweaks Panel */}
+      <TweaksPanel>
+        <TweakSection label="Couleurs">
+          <TweakColor id="accentColor" label="Accent (bleu)" />
+          <TweakColor id="greenColor" label="Disponible (vert)" />
+        </TweakSection>
+        <TweakSection label="Mode">
+          <TweakToggle id="darkMode" label="Mode sombre" />
+        </TweakSection>
+        <TweakSection label="Contenu">
+          <TweakText id="driverName" label="Nom du chauffeur" />
+          <TweakToggle id="available" label="Disponible" />
+        </TweakSection>
+        <TweakSection label="Typographie">
+          <TweakSlider id="fontSize" label="Taille de police" min={13} max={18} step={1} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LANDING PAGE
+// ═══════════════════════════════════════════════════════════════════════════════
+function LandingPage({ tweaks, onGoToDash, onGoToBooking }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [annualBilling, setAnnualBilling] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 40);
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLinks = ["Fonctionnalités", "Comment ça marche", "Tarifs", "FAQ"];
+
+  return (
+    <div ref={containerRef} style={{ height: "100vh", overflowY: "auto", background: "var(--bg)" }}>
+      {/* NAV */}
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 100,
+        background: scrolled ? "color-mix(in srgb, var(--bg) 85%, transparent)" : "transparent",
+        backdropFilter: scrolled ? "saturate(180%) blur(20px)" : "none",
+        WebkitBackdropFilter: scrolled ? "saturate(180%) blur(20px)" : "none",
+        borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
+        transition: "all .35s var(--ease-out)",
+        padding: "0 40px",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Logo />
+          <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+            {navLinks.map(l => <span key={l} className="nav-link" style={{ display: window.innerWidth < 768 ? "none" : "block" }}>{l}</span>)}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button className="btn-ghost" style={{ padding: "8px 20px", fontSize: 14 }} onClick={onGoToDash}>Connexion</button>
+            <button className="btn-black" style={{ padding: "8px 20px", fontSize: 14 }} onClick={onGoToDash}>Commencer</button>
+          </div>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "120px 40px 80px", textAlign: "center" }}>
+        {/* Subtle radial glow background */}
+        <div aria-hidden="true" style={{
+          position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
+          width: 800, height: 600, pointerEvents: "none", zIndex: 0,
+          background: `radial-gradient(ellipse at center, ${tweaks.greenColor}10 0%, transparent 60%)`,
+          filter: "blur(40px)"
+        }} />
+
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div className="fade-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "7px 16px 7px 8px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 100, marginBottom: 36, boxShadow: "0 1px 2px rgba(0,0,0,.04)" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: tweaks.greenColor, color: "#fff" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500 }}>+500 chauffeurs déjà en activité</span>
+          </div>
+
+          <h1 className="fade-up" style={{ fontSize: "clamp(44px, 7vw, 88px)", fontWeight: 500, lineHeight: 1, letterSpacing: "-0.045em", marginBottom: 28, animationDelay: ".05s" }}>
+            <span className="display" style={{ fontWeight: 400, fontStyle: "italic" }}>Votre</span> clientèle privée,<br />
+            <span style={{ color: "var(--muted)" }}>sans </span><span className="display" style={{ fontWeight: 400, fontStyle: "italic", color: "var(--muted)" }}>intermédiaire.</span>
+          </h1>
+
+          <p className="fade-up" style={{ fontSize: 19, color: "var(--muted)", maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.55, fontWeight: 400, animationDelay: ".1s" }}>
+            Créez votre page de réservation, gérez vos clients et recevez des demandes directes — en quelques minutes.
+          </p>
+
+          <div className="fade-up" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", animationDelay: ".15s" }}>
+            <button className="btn-black" style={{ fontSize: 15, padding: "15px 32px" }} onClick={onGoToDash}>
+              Créer mon espace
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+            <button className="btn-ghost" style={{ fontSize: 15, padding: "15px 32px" }} onClick={onGoToBooking}>
+              Voir une démo client
+            </button>
+          </div>
+
+          <div className="fade-up" style={{ marginTop: 24, fontSize: 13, color: "var(--muted)", animationDelay: ".18s" }}>
+            <span className="mono">14 jours gratuits</span> · Sans CB · Sans engagement
+          </div>
+        </div>
+
+        {/* Mock dashboard preview */}
+        <div className="fade-up" style={{ marginTop: 96, animationDelay: ".2s", position: "relative" }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 18, padding: 6, maxWidth: 920, margin: "0 auto", boxShadow: "0 30px 60px -20px rgba(10,10,10,.18), 0 8px 24px -8px rgba(10,10,10,.08)" }}>
+            {/* Window bar */}
+            <div style={{ borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["#ff5f57","#ffbd2e","#28c840"].map((c,i) => <div key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: c }} />)}
+              </div>
+              <div style={{ flex: 1, background: "var(--surface2)", borderRadius: 6, padding: "5px 12px", display: "flex", alignItems: "center", gap: 8, maxWidth: 320, margin: "0 auto" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "'JetBrains Mono', monospace" }}>app.privechauffeur.com</span>
+              </div>
+              <div style={{ width: 60 }} />
+            </div>
+            {/* Mini dashboard preview */}
+            <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 0, borderRadius: 12, overflow: "hidden", background: "var(--bg)", minHeight: 320 }}>
+              <div style={{ background: "var(--surface)", borderRight: "1px solid var(--border)", padding: "20px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+                <div style={{ padding: "0 8px 14px", fontSize: 10, fontWeight: 700, color: "var(--muted)", letterSpacing: ".1em", textTransform: "uppercase" }}>Espace pro</div>
+                {[
+                  { label: "Accueil", icon: "M3 12l2-2 7-7 7 7 2 2v9a2 2 0 0 1-2 2h-3v-7H10v7H7a2 2 0 0 1-2-2v-9z" },
+                  { label: "Réservations", icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" },
+                  { label: "Clients", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+                  { label: "Tarifs", icon: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
+                ].map((item, i) => (
+                  <div key={item.label} style={{ padding: "8px 10px", borderRadius: 6, background: i === 0 ? "var(--surface2)" : "transparent", color: i === 0 ? "var(--text)" : "var(--muted)", fontSize: 13, fontWeight: i === 0 ? 600 : 500, display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={item.icon}/></svg>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: "20px 24px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                  <div>
+                    <div className="display" style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", marginBottom: 4 }}>Bonjour Jean</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Mardi 14 janvier · 3 courses prévues</div>
+                  </div>
+                  <div className="pill" style={{ background: "var(--surface)", color: tweaks.greenColor, border: `1px solid ${tweaks.greenColor}30`, padding: "5px 11px", fontSize: 12 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: tweaks.greenColor, boxShadow: `0 0 8px ${tweaks.greenColor}` }} />
+                    Disponible
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+                  {[["5","Demandes","#0a0a0a"],["3","Confirmées",tweaks.greenColor],["42","Clients","#0a0a0a"],["285€","Aujourd'hui","#0a0a0a"]].map(([v,l,c]) => (
+                    <div key={l} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px" }}>
+                      <div className="display" style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em", color: c }}>{v}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontWeight: 500 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Booking row */}
+                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>S</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 1 }}>Sophie M. · 14:30</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>CDG T2E → Hôtel Ritz</div>
+                  </div>
+                  <div className="display" style={{ fontSize: 16, fontWeight: 500 }}>85€</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
+        <div style={{ marginBottom: 64, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 24, height: 1, background: "var(--muted)" }} />
+              Fonctionnalités
+            </p>
+            <h2 style={{ fontSize: "clamp(32px, 4.5vw, 56px)", fontWeight: 500, letterSpacing: "-.035em", lineHeight: 1.05 }}>
+              Tout pour développer<br />
+              <span className="display" style={{ fontWeight: 400, fontStyle: "italic", color: "var(--muted)" }}>votre activité.</span>
+            </h2>
+          </div>
+          <p style={{ fontSize: 15, color: "var(--muted)", maxWidth: 360, lineHeight: 1.6 }}>
+            Une plateforme complète pensée pour les chauffeurs indépendants. Pas de commission, pas d'intermédiaire.
+          </p>
+        </div>
+        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 0, border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--surface)" }}>
+          {[
+            { icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", title: "Page chauffeur", desc: "Votre vitrine pro en ligne. Photo, bio, véhicule, avis et bouton de réservation." },
+            { icon: "M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", title: "Réservation directe", desc: "Vos clients réservent depuis votre page. Confirmez en un clic, sans intermédiaire." },
+            { icon: "M22 12h-4l-3 9L9 3l-3 9H2", title: "Disponibilité temps réel", desc: "Activez ou désactivez votre dispo d'un geste. Vos clients voient votre statut en direct." },
+            { icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75", title: "CRM intégré", desc: "Historique, préférences, coordonnées et notes pour chaque client privé." },
+            { icon: "M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6", title: "Tarifs personnalisés", desc: "Fixez vos propres prix par trajet, heure ou kilomètre. Transparence totale." },
+            { icon: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0", title: "Notifications", desc: "Alertes instantanées pour chaque nouvelle réservation ou message client." },
+          ].map(({ icon, title, desc }, i) => (
+            <div key={title} className="feature-cell" style={{ padding: "36px 32px", borderRight: (i % 3 !== 2) ? "1px solid var(--border)" : "none", borderBottom: (i < 3) ? "1px solid var(--border)" : "none", position: "relative" }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, color: "var(--text)" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  {icon.split(" M").map((seg, k) => <path key={k} d={k === 0 ? seg : "M" + seg} />)}
+                </svg>
+              </div>
+              <div className="display" style={{ fontSize: 20, fontWeight: 500, marginBottom: 8, letterSpacing: "-.01em" }}>{title}</div>
+              <div style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </section></Reveal>
+
+      {/* HOW IT WORKS */}
+      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
+        <div style={{ marginBottom: 64 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 24, height: 1, background: "var(--muted)" }} />
+            Comment ça marche
+          </p>
+          <h2 style={{ fontSize: "clamp(32px, 4.5vw, 56px)", fontWeight: 500, letterSpacing: "-.035em", lineHeight: 1.05, maxWidth: 700 }}>
+            Lancez-vous en <span className="display" style={{ fontWeight: 400, fontStyle: "italic" }}>3 étapes</span>.
+          </h2>
+        </div>
+        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 8 }}>
+          {[
+            { num: "01", title: "Créez votre compte", desc: "Inscrivez-vous en 2 minutes. Aucune carte bancaire requise." },
+            { num: "02", title: "Configurez votre page", desc: "Ajoutez vos informations, votre véhicule et vos tarifs." },
+            { num: "03", title: "Partagez votre lien", desc: "Envoyez votre lien à vos clients par SMS ou WhatsApp." },
+          ].map(({ num, title, desc }, i) => (
+            <div key={num} style={{ display: "flex", flexDirection: "column", gap: 16, padding: "32px 28px 32px 0", borderTop: "1px solid var(--border)", position: "relative" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <span className="mono" style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>{num}</span>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--text)", color: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{i + 1}</div>
+              </div>
+              <div className="display" style={{ fontSize: 24, fontWeight: 500, letterSpacing: "-.015em", lineHeight: 1.2 }}>{title}</div>
+              <div style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </section></Reveal>
+
+      {/* TESTIMONIALS */}
+      <Reveal><section style={{ background: "var(--surface)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", padding: "100px 40px", margin: "40px 0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ marginBottom: 56 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 24, height: 1, background: "var(--muted)" }} />
+              Témoignages
+            </p>
+            <h2 style={{ fontSize: "clamp(32px, 4.5vw, 56px)", fontWeight: 500, letterSpacing: "-.035em", lineHeight: 1.05, maxWidth: 720 }}>
+              Des chauffeurs qui<br />ont repris <span className="display" style={{ fontWeight: 400, fontStyle: "italic" }}>le contrôle.</span>
+            </h2>
+          </div>
+          <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+            {[
+              { name: "Karim B.", role: "VTC · Paris", years: "3 ans", text: "Avant, je payais 25% de commission sur chaque course. Aujourd'hui, je garde tout. Mes clients réguliers réservent direct sur ma page.", initial: "K" },
+              { name: "Stéphane M.", role: "Chauffeur privé · Lyon", years: "8 ans", text: "Le CRM m'a changé la vie. Je sais ce que mes clients préfèrent, leurs habitudes. Ils se sentent vraiment pris en charge.", initial: "S" },
+              { name: "Aïcha D.", role: "VTC · Marseille", years: "2 ans", text: "Mes clients adorent pouvoir réserver à n'importe quelle heure sans passer par une appli. Et moi je gère tout depuis mon téléphone.", initial: "A" },
+            ].map((t, i) => (
+              <div key={t.name} style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 16, padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
+                <svg width="28" height="22" viewBox="0 0 28 22" fill="none" style={{ color: "var(--muted)", opacity: .35 }}>
+                  <path d="M0 22V12C0 5.373 5.373 0 12 0v3c-4.97 0-9 4.03-9 9h6v10H0zm16 0V12c0-6.627 5.373-12 12-12v3c-4.97 0-9 4.03-9 9h6v10H16z" fill="currentColor"/>
+                </svg>
+                <p className="display" style={{ fontSize: 18, fontWeight: 400, lineHeight: 1.5, letterSpacing: "-.005em", flex: 1 }}>{t.text}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>{t.initial}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{t.role}</div>
+                  </div>
+                  <div className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{t.years}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Logos / metrics row */}
+          <div style={{ marginTop: 64, paddingTop: 40, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 32, textAlign: "center" }}>
+            {[
+              { v: "500+", l: "Chauffeurs actifs" },
+              { v: "12K+", l: "Courses par mois" },
+              { v: "4,8★", l: "Note moyenne" },
+              { v: "0%", l: "Commission prélevée" },
+            ].map(({ v, l }) => (
+              <div key={l}>
+                <div className="display" style={{ fontSize: 36, fontWeight: 500, letterSpacing: "-.035em", lineHeight: 1 }}>{v}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8, letterSpacing: ".06em", textTransform: "uppercase", fontWeight: 500 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section></Reveal>
+
+      {/* PRICING */}
+      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 40px" }}>
+        <div style={{ marginBottom: 48, textAlign: "center" }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16 }}>Tarifs</p>
+          <h2 style={{ fontSize: "clamp(32px, 4.5vw, 56px)", fontWeight: 500, letterSpacing: "-.035em", lineHeight: 1.05 }}>
+            Un prix simple,<br /><span className="display" style={{ fontWeight: 400, fontStyle: "italic" }}>sans commission.</span>
+          </h2>
+        </div>
+        {/* Toggle */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 48 }}>
+          <span style={{ fontSize: 14, color: !annualBilling ? "var(--text)" : "var(--muted)", fontWeight: 500 }}>Mensuel</span>
+          <div
+            onClick={() => setAnnualBilling(!annualBilling)}
+            style={{ width: 44, height: 24, borderRadius: 12, background: annualBilling ? "var(--text)" : "var(--surface2)", border: "1px solid var(--border)", cursor: "pointer", position: "relative", transition: "background .25s var(--ease-out)" }}
+          >
+            <div style={{ position: "absolute", top: 2, left: annualBilling ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "var(--surface)", transition: "left .25s var(--ease-spring)", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
+          </div>
+          <span style={{ fontSize: 14, color: annualBilling ? "var(--text)" : "var(--muted)", fontWeight: 500 }}>Annuel</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: tweaks.greenColor, background: `${tweaks.greenColor}15`, padding: "3px 10px", borderRadius: 100, opacity: annualBilling ? 1 : 0.5, transition: "opacity .25s" }}>−20%</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, maxWidth: 980, margin: "0 auto" }}>
+          {[
+            { name: "Starter", price: annualBilling ? 24 : 29, pop: false, tagline: "Pour démarrer", features: ["Page chauffeur publique", "Réservation directe", "Jusqu'à 50 clients", "Notifications email"] },
+            { name: "Pro", price: annualBilling ? 65 : 79, pop: true, tagline: "Le plus populaire", features: ["Tout Starter, et :", "CRM clients complet", "Clients illimités", "Notifications SMS", "Statistiques avancées", "Support prioritaire"] },
+            { name: "Premium", price: annualBilling ? 119 : 149, pop: false, tagline: "Pour les flottes", features: ["Tout Pro, et :", "Multi-véhicules", "Facturation automatique", "API & Marque blanche"] },
+          ].map(({ name, price, pop, tagline, features }) => (
+            <div key={name} style={{
+              padding: pop ? 32 : 28, borderRadius: 16, position: "relative",
+              background: pop ? "var(--text)" : "var(--surface)",
+              color: pop ? "var(--bg)" : "var(--text)",
+              border: pop ? "none" : "1px solid var(--border)",
+              boxShadow: pop ? "0 20px 40px -12px rgba(10,10,10,.25)" : "0 1px 3px rgba(10,10,10,.04)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+                <div>
+                  <div className="display" style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-.015em", marginBottom: 4 }}>{name}</div>
+                  <div style={{ fontSize: 12, opacity: .65 }}>{tagline}</div>
+                </div>
+                {pop && <div style={{ width: 8, height: 8, borderRadius: "50%", background: tweaks.greenColor, boxShadow: `0 0 12px ${tweaks.greenColor}`, marginTop: 6 }} />}
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                <span className="display" style={{ fontSize: 56, fontWeight: 500, letterSpacing: "-.045em", lineHeight: 1 }}>{price}€</span>
+                <span style={{ fontSize: 14, opacity: .55 }}>/mois</span>
+              </div>
+              {annualBilling && <div className="mono" style={{ fontSize: 11, opacity: .55, marginBottom: 24 }}>Facturé annuellement</div>}
+              {!annualBilling && <div style={{ height: 11, marginBottom: 24 }} />}
+              <button
+                style={{
+                  width: "100%", padding: "12px 0", fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+                  borderRadius: 8, cursor: "pointer", border: "none",
+                  background: pop ? "var(--bg)" : "var(--text)",
+                  color: pop ? "var(--text)" : "var(--bg)",
+                  transition: "transform .15s var(--ease-spring), opacity .2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.opacity = ".9"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.opacity = "1"; }}
+                onClick={onGoToDash}
+              >
+                Commencer
+              </button>
+              <div style={{ borderTop: `1px solid ${pop ? "rgba(255,255,255,.12)" : "var(--border)"}`, margin: "24px 0 0", paddingTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+                {features.map((f, j) => (
+                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, opacity: j === 0 && (f.includes("Tout")) ? .8 : 1, fontWeight: j === 0 && f.includes("Tout") ? 600 : 400 }}>
+                    {!(j === 0 && f.includes("Tout")) && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 3, flexShrink: 0, opacity: .55 }}><path d="M20 6L9 17l-5-5"/></svg>
+                    )}
+                    {(j === 0 && f.includes("Tout")) && (
+                      <span style={{ width: 14, marginTop: 3, flexShrink: 0 }} />
+                    )}
+                    <span style={{ lineHeight: 1.45 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ textAlign: "center", marginTop: 32, fontSize: 13, color: "var(--muted)" }}>14 jours d'essai gratuit · Sans engagement · Annulation à tout moment</p>
+      </section></Reveal>
+
+      {/* CTA BOTTOM */}
+      <Reveal><section style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 40px" }}>
+        <div style={{ background: "var(--text)", color: "var(--bg)", borderRadius: 24, padding: "80px 48px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+          <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 0%, ${tweaks.greenColor}30 0%, transparent 50%)`, pointerEvents: "none" }} />
+          <div style={{ position: "relative" }}>
+            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 24, opacity: .55 }}>Commencez aujourd'hui</p>
+            <h2 style={{ fontSize: "clamp(36px, 5vw, 64px)", fontWeight: 500, letterSpacing: "-.04em", marginBottom: 24, lineHeight: 1.05 }}>
+              Prêt à reprendre<br /><span className="display" style={{ fontWeight: 400, fontStyle: "italic" }}>le contrôle ?</span>
+            </h2>
+            <p style={{ fontSize: 17, opacity: .7, marginBottom: 40, maxWidth: 480, margin: "0 auto 40px", lineHeight: 1.55 }}>
+              Rejoignez plus de 500 chauffeurs qui ont repris le contrôle de leur business — sans commission, sans intermédiaire.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={onGoToDash}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "var(--bg)", color: "var(--text)",
+                  fontWeight: 600, fontSize: 15, padding: "15px 32px", borderRadius: 10,
+                  border: "none", cursor: "pointer", fontFamily: "inherit",
+                  transition: "transform .2s var(--ease-spring)",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+              >
+                Créer mon espace
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+              <button
+                onClick={onGoToBooking}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "transparent", color: "var(--bg)",
+                  fontWeight: 500, fontSize: 15, padding: "15px 32px", borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,.18)", cursor: "pointer", fontFamily: "inherit",
+                  transition: "background .2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                Voir une démo
+              </button>
+            </div>
+            <div className="mono" style={{ fontSize: 12, opacity: .45, marginTop: 32 }}>14 jours gratuits · Sans CB</div>
+          </div>
+        </div>
+      </section></Reveal>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: "1px solid var(--border)", padding: "40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: 1200, margin: "0 auto" }}>
+        <Logo />
+        <div style={{ fontSize: 13, color: "var(--muted)" }}>© 2025 PrivéChauffeur. Tous droits réservés.</div>
+        <div style={{ display: "flex", gap: 24 }}>
+          {["CGV", "Confidentialité", "Contact"].map(l => <span key={l} style={{ fontSize: 13, color: "var(--muted)", cursor: "pointer" }}>{l}</span>)}
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+function Dashboard({ tweaks, tab, setTab, onBack }) {
+  const [isAvailable, setIsAvailable] = useState(tweaks.available);
+  const [acceptedIds, setAcceptedIds] = useState([]);
+  const [refusedIds, setRefusedIds] = useState([]);
+
+  useEffect(() => { setIsAvailable(tweaks.available); }, [tweaks.available]);
+
+  const firstName = tweaks.driverName.split(" ")[0];
+
+  const navItems = [
+    { id: "home", label: "Accueil", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" },
+    { id: "bookings", label: "Réservations", icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" },
+    { id: "clients", label: "Clients", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+    { id: "availability", label: "Disponibilité", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
+    { id: "profile", label: "Mon profil", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
+    { id: "settings", label: "Paramètres", icon: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" },
+  ];
+
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "var(--bg)", overflow: "hidden" }}>
+      {/* SIDEBAR */}
+      <aside style={{ width: 240, background: "var(--surface)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", padding: "20px 12px", flexShrink: 0 }}>
+        <div style={{ padding: "8px 12px", marginBottom: 24 }}>
+          <Logo size="sm" />
+        </div>
+        <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              className={`sidebar-item ${tab === item.id ? "active" : ""}`}
+              onClick={() => setTab(item.id)}
+              style={{ border: "none", width: "100%", textAlign: "left", background: "transparent", fontFamily: "inherit", cursor: "pointer" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {item.icon.split("M").filter(Boolean).map((p,i) => <path key={i} d={"M"+p} />)}
+              </svg>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+          <button className="sidebar-item" onClick={onBack} style={{ width: "100%", border: "none", fontFamily: "inherit", cursor: "pointer", color: "var(--muted)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Déconnexion
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <main style={{ flex: 1, overflow: "auto", padding: "40px 48px", background: "var(--bg)" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+          <div>
+            <h1 className="display" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-.02em", lineHeight: 1.1 }}>
+              {tab === "home" && <>Bonjour, <span style={{ fontStyle: "italic", fontWeight: 400 }}>{firstName}.</span></>}
+              {tab === "bookings" && "Réservations"}
+              {tab === "clients" && "Clients"}
+              {tab === "availability" && "Disponibilité"}
+              {tab === "profile" && "Mon profil public"}
+              {tab === "settings" && "Paramètres"}
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, textTransform: "capitalize" }}>
+              {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              className="pill"
+              onClick={() => setIsAvailable(!isAvailable)}
+              style={{
+                cursor: "pointer",
+                background: isAvailable ? `rgba(6,193,103,.12)` : "var(--surface2)",
+                color: isAvailable ? tweaks.greenColor : "var(--muted)",
+                border: `1px solid ${isAvailable ? "rgba(6,193,103,.3)" : "var(--border)"}`,
+                transition: "all .2s",
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: isAvailable ? tweaks.greenColor : "var(--muted)", flexShrink: 0, boxShadow: isAvailable ? `0 0 8px ${tweaks.greenColor}` : "none" }} />
+              {isAvailable ? "En ligne" : "Hors ligne"}
+            </div>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>
+              {tweaks.driverName.charAt(0)}
+            </div>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div className="tab-content" key={tab}>
+          {tab === "home" && <DashHome tweaks={tweaks} isAvailable={isAvailable} setIsAvailable={setIsAvailable} setTab={setTab} acceptedIds={acceptedIds} refusedIds={refusedIds} setAcceptedIds={setAcceptedIds} setRefusedIds={setRefusedIds} />}
+          {tab === "bookings" && <DashBookings tweaks={tweaks} acceptedIds={acceptedIds} refusedIds={refusedIds} setAcceptedIds={setAcceptedIds} setRefusedIds={setRefusedIds} />}
+          {tab === "clients" && <DashClients tweaks={tweaks} />}
+          {tab === "availability" && <DashAvailability tweaks={tweaks} isAvailable={isAvailable} setIsAvailable={setIsAvailable} />}
+          {tab === "profile" && <DashProfile tweaks={tweaks} />}
+          {tab === "settings" && <DashSettings tweaks={tweaks} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function DashHome({ tweaks, isAvailable, setIsAvailable, setTab, acceptedIds, refusedIds, setAcceptedIds, setRefusedIds }) {
+  const pendingBookings = BOOKINGS.filter(b => !acceptedIds.includes(b.id) && !refusedIds.includes(b.id) && b.status === "pending");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Availability card */}
+      <div style={{
+        background: isAvailable ? `rgba(6,193,103,.08)` : "var(--surface)",
+        border: `1px solid ${isAvailable ? "rgba(6,193,103,.25)" : "var(--border)"}`,
+        borderRadius: 12, padding: "24px 28px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        flexWrap: "wrap", gap: 16, transition: "all .3s",
+      }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.02em", marginBottom: 4 }}>
+            {isAvailable ? "Vous êtes disponible" : "Vous êtes indisponible"}
+          </div>
+          <div style={{ fontSize: 14, color: "var(--muted)" }}>
+            {isAvailable ? "Paris Centre · Encore 3h disponibles" : "Activez votre disponibilité pour recevoir des courses."}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {isAvailable && (
+            <button className="btn-ghost" style={{ fontSize: 14, padding: "10px 20px" }} onClick={() => setTab("availability")}>Modifier</button>
+          )}
+          <button
+            className={isAvailable ? "btn-ghost" : "btn-black"}
+            style={{ fontSize: 14, padding: "10px 20px", background: isAvailable ? "rgba(239,68,68,.1)" : undefined, color: isAvailable ? "#ef4444" : undefined, borderColor: isAvailable ? "rgba(239,68,68,.2)" : undefined }}
+            onClick={() => setIsAvailable(!isAvailable)}
+          >
+            {isAvailable ? "Désactiver" : "Me rendre disponible"}
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {[
+          { label: "Demandes du jour", value: "5" },
+          { label: "Courses à venir", value: "3" },
+          { label: "Base clients", value: "42" },
+          { label: "Revenus (mois)", value: "285", suffix: " €", accent: true },
+        ].map(({ label, value, suffix, accent }) => (
+          <div key={label} className="stat-card hoverable">
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500, marginBottom: 12, letterSpacing: ".04em", textTransform: "uppercase" }}>{label}</div>
+            <div className="display" style={{ fontSize: 36, fontWeight: 500, letterSpacing: "-.025em", color: accent ? tweaks.greenColor : "var(--text)", lineHeight: 1 }}>
+              <AnimatedNumber value={value} suffix={suffix || ""} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {[
+          { label: "Nouvelle dispo", tab: "availability", color: tweaks.accentColor },
+          { label: "Voir les courses", tab: "bookings", color: "#a855f7" },
+          { label: "Mon profil", tab: "profile", color: tweaks.greenColor },
+          { label: "Ajouter client", tab: "clients", color: "#f59e0b" },
+        ].map(({ label, tab, color }) => (
+          <button key={label} className="card" onClick={() => setTab(tab)} style={{ padding: "16px 20px", cursor: "pointer", border: "1px solid var(--border)", background: "var(--surface)", fontFamily: "inherit", textAlign: "left", borderRadius: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color, marginBottom: 4 }}>{label}</div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: .7 }}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        ))}
+      </div>
+
+      {/* Upcoming bookings */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700 }}>Prochaines courses</h3>
+          <button style={{ fontSize: 13, color: tweaks.accentColor, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }} onClick={() => setTab("bookings")}>Tout voir →</button>
+        </div>
+        <div className="card" style={{ overflow: "hidden" }}>
+          <div className="stagger">
+          {BOOKINGS.map((b, i) => {
+            const accepted = acceptedIds.includes(b.id);
+            const refused = refusedIds.includes(b.id);
+            return (
+              <div key={b.id} className="booking-row">
+                <div style={{ width: 48, textAlign: "center", flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, textTransform: "uppercase" }}>{b.date === "Aujourd'hui" ? "Auj." : "Dem."}</div>
+                  <div style={{ fontSize: 20, fontWeight: 900 }}>{b.time.split(":")[0]}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{b.time.split(":")[1]}h</div>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{b.client}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.pickup} → {b.dropoff}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800 }}>{b.price} €</span>
+                  {!accepted && !refused && b.status === "pending" && (
+                    <>
+                      <button onClick={() => setAcceptedIds(prev => [...prev, b.id])} style={{ padding: "6px 12px", background: `rgba(6,193,103,.1)`, border: `1px solid rgba(6,193,103,.3)`, color: tweaks.greenColor, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Accepter</button>
+                      <button onClick={() => setRefusedIds(prev => [...prev, b.id])} style={{ padding: "6px 12px", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", color: "#ef4444", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Refuser</button>
+                    </>
+                  )}
+                  {(accepted || b.status === "confirmed") && !refused && (
+                    <span className="pill" style={{ background: `rgba(6,193,103,.1)`, color: tweaks.greenColor, border: `1px solid rgba(6,193,103,.2)`, fontSize: 12 }}>Confirmé</span>
+                  )}
+                  {refused && <span className="pill" style={{ background: "rgba(239,68,68,.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,.2)", fontSize: 12 }}>Refusé</span>}
+                </div>
+              </div>
+            );
+          })}
+          </div>
+        </div>
+      </div>
+
+      {/* Booking link */}
+      <div className="card" style={{ padding: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Votre lien de réservation</div>
+        <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Partagez ce lien à vos clients pour des réservations directes.</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: "monospace", color: "var(--muted)" }}>
+            privechauffeur.com/jean-dupont
+          </div>
+          <button className="btn-ghost" style={{ padding: "10px 16px", fontSize: 13, flexShrink: 0 }}>Copier</button>
+          <button style={{ padding: "10px 16px", background: "rgba(37,211,102,.1)", border: "1px solid rgba(37,211,102,.25)", color: "#25D366", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashBookings({ tweaks, acceptedIds, refusedIds, setAcceptedIds, setRefusedIds }) {
+  const [filter, setFilter] = useState("all");
+  const filtered = filter === "all" ? BOOKINGS : filter === "pending" ? BOOKINGS.filter(b => b.status === "pending") : BOOKINGS.filter(b => b.status === "confirmed");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        {[["all","Tout"], ["pending","En attente"], ["confirmed","Confirmé"]].map(([v,l]) => (
+          <button key={v} onClick={() => setFilter(v)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${filter === v ? tweaks.accentColor : "var(--border)"}`, background: filter === v ? `${tweaks.accentColor}18` : "transparent", color: filter === v ? tweaks.accentColor : "var(--muted)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all .15s" }}>
+            {l}
+          </button>
+        ))}
+      </div>
+      <div className="card" style={{ overflow: "hidden" }}>
+        {filtered.map(b => {
+          const accepted = acceptedIds.includes(b.id);
+          const refused = refusedIds.includes(b.id);
+          return (
+            <div key={b.id} style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", gap: 20, alignItems: "flex-start" }}>
+              <div style={{ background: "var(--surface2)", borderRadius: 10, padding: "12px 16px", textAlign: "center", flexShrink: 0, minWidth: 64 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, textTransform: "uppercase" }}>{b.date}</div>
+                <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>{b.time}</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700 }}>{b.client}</span>
+                  {(accepted || b.status === "confirmed") && !refused && <span className="pill tag-new" style={{ fontSize: 11, padding: "2px 10px" }}>Confirmé</span>}
+                  {!accepted && !refused && b.status === "pending" && <span className="pill" style={{ fontSize: 11, padding: "2px 10px", background: "rgba(245,158,11,.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,.25)" }}>En attente</span>}
+                  {refused && <span className="pill" style={{ fontSize: 11, padding: "2px 10px", background: "rgba(239,68,68,.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,.2)" }}>Refusé</span>}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4 }}>
+                  <span style={{ color: "var(--text)", fontWeight: 600 }}>↑</span> {b.pickup}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                  <span style={{ color: tweaks.accentColor, fontWeight: 600 }}>↓</span> {b.dropoff}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+                <span style={{ fontSize: 20, fontWeight: 900 }}>{b.price} €</span>
+                {!accepted && !refused && b.status === "pending" && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setAcceptedIds(p => [...p, b.id])} style={{ padding: "8px 14px", background: `rgba(6,193,103,.1)`, border: `1px solid rgba(6,193,103,.3)`, color: tweaks.greenColor, borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Accepter</button>
+                    <button onClick={() => setRefusedIds(p => [...p, b.id])} style={{ padding: "8px 14px", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", color: "#ef4444", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Refuser</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DashClients({ tweaks }) {
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
+  const filtered = CLIENTS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ display: "flex", gap: 20 }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ marginBottom: 16 }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un client..." style={{ maxWidth: 320 }} />
+        </div>
+        <div className="card" style={{ overflow: "hidden" }}>
+          {filtered.map((c, i) => (
+            <div key={c.id} onClick={() => setSelected(c)} style={{ padding: "16px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "none", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", background: selected?.id === c.id ? "var(--surface2)" : "transparent", transition: "background .15s" }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{c.initial}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>{c.trips} courses</div>
+              </div>
+              <span className={`tag ${c.tag === "VIP" ? "tag-vip" : c.tag === "Nouveau" ? "tag-new" : "tag-reg"}`}>{c.tag}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {selected && (
+        <div className="card fade-in" style={{ width: 280, padding: 24, flexShrink: 0, alignSelf: "flex-start" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700 }}>{selected.initial}</div>
+            <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 20, fontFamily: "inherit" }}>×</button>
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>{selected.name}</div>
+          <span className={`tag ${selected.tag === "VIP" ? "tag-vip" : selected.tag === "Nouveau" ? "tag-new" : "tag-reg"}`} style={{ marginBottom: 20, display: "inline-block" }}>{selected.tag}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16, fontSize: 13 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>Téléphone</span><span style={{ fontWeight: 600 }}>{selected.phone}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--muted)" }}>Courses</span><span style={{ fontWeight: 600 }}>{selected.trips}</span></div>
+          </div>
+          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+            <button className="btn-black" style={{ fontSize: 13, padding: "10px 0", width: "100%", borderRadius: 8 }}>Appeler</button>
+            <button className="btn-ghost" style={{ fontSize: 13, padding: "10px 0", width: "100%", borderRadius: 8, color: "#25D366", borderColor: "rgba(37,211,102,.3)" }}>WhatsApp</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DashAvailability({ tweaks, isAvailable, setIsAvailable }) {
+  const [zone, setZone] = useState("Paris Centre");
+  const [until, setUntil] = useState("18:00");
+  const zones = ["Paris Centre", "Paris Nord", "Paris Sud", "Île-de-France", "CDG", "Orly"];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 560 }}>
+      <div className="card" style={{ padding: 28 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Statut de disponibilité</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", background: isAvailable ? `rgba(6,193,103,.08)` : "var(--surface2)", borderRadius: 10, border: `1px solid ${isAvailable ? "rgba(6,193,103,.25)" : "var(--border)"}`, transition: "all .3s", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: isAvailable ? tweaks.greenColor : "var(--muted)", boxShadow: isAvailable ? `0 0 10px ${tweaks.greenColor}` : "none", animation: isAvailable ? "pulse 2s infinite" : "none" }} />
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{isAvailable ? "En ligne" : "Hors ligne"}</span>
+          </div>
+          <div
+            onClick={() => setIsAvailable(!isAvailable)}
+            style={{ width: 52, height: 28, borderRadius: 14, background: isAvailable ? tweaks.greenColor : "var(--border)", cursor: "pointer", position: "relative", transition: "background .2s" }}
+          >
+            <div style={{ position: "absolute", top: 4, left: isAvailable ? 28 : 4, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,.4)" }} />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", display: "block", marginBottom: 8 }}>Zone actuelle</label>
+            <select value={zone} onChange={e => setZone(e.target.value)} style={{ background: "var(--surface2)", border: "1.5px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "12px 16px", width: "100%", fontFamily: "inherit", fontSize: 15 }}>
+              {zones.map(z => <option key={z} value={z}>{z}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", display: "block", marginBottom: 8 }}>Disponible jusqu'à</label>
+            <input type="time" value={until} onChange={e => setUntil(e.target.value)} />
+          </div>
+          <button className="btn-black" style={{ width: "100%", marginTop: 4 }}>Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashProfile({ tweaks }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 600 }}>
+      <div className="card" style={{ padding: 28 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Informations publiques</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {[
+            { label: "Nom public", value: tweaks.driverName, type: "text" },
+            { label: "Ville", value: "Paris", type: "text" },
+            { label: "Biographie", value: "Chauffeur privé depuis 5 ans, je vous accompagne dans tous vos déplacements en Île-de-France.", type: "textarea" },
+          ].map(({ label, value, type }) => (
+            <div key={label}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", display: "block", marginBottom: 6 }}>{label}</label>
+              {type === "textarea" ? <textarea rows={3} defaultValue={value} style={{ resize: "none" }} /> : <input type="text" defaultValue={value} />}
+            </div>
+          ))}
+          <button className="btn-black" style={{ width: "100%", marginTop: 4 }}>Sauvegarder le profil</button>
+        </div>
+      </div>
+      <div className="card" style={{ padding: 28 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Votre page publique</div>
+        <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>Voici comment vos clients vous trouvent en ligne.</div>
+        <div style={{ background: "var(--surface2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: "monospace", marginBottom: 12, color: "var(--muted)" }}>
+          privechauffeur.com/jean-dupont
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-ghost" style={{ fontSize: 13, padding: "10px 20px" }}>Copier le lien</button>
+          <button className="btn-black" style={{ fontSize: 13, padding: "10px 20px" }}>Prévisualiser</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashSettings({ tweaks }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 520 }}>
+      {[
+        { title: "Notifications", items: ["Nouvelle réservation par email", "Nouvelle réservation par SMS", "Rappel 1h avant la course"] },
+        { title: "Compte", items: ["Changer le mot de passe", "Changer l'adresse email"] },
+        { title: "Abonnement", items: ["Plan Pro — 79€/mois", "Gérer la facturation"] },
+      ].map(({ title, items }) => (
+        <div key={title} className="card" style={{ padding: 24, overflow: "hidden" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, paddingBottom: 16, borderBottom: "1px solid var(--border)" }}>{title}</div>
+          {items.map((item, i) => (
+            <div key={item} style={{ padding: "14px 0", borderBottom: i < items.length - 1 ? "1px solid var(--border)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
+              <span>{item}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          ))}
+        </div>
+      ))}
+      <button style={{ padding: "12px 24px", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", color: "#ef4444", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Supprimer mon compte</button>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOOKING PAGE (Public Driver View)
+// ═══════════════════════════════════════════════════════════════════════════════
+function BookingPage({ tweaks, onBack }) {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({ pickup: "", dropoff: "", timing: "now", date: "", time: "", name: "", phone: "", email: "", comment: "" });
+  const [errors, setErrors] = useState({});
+  const [sent, setSent] = useState(false);
+
+  const totalSteps = 4;
+
+  function update(field, value) {
+    setData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+  }
+
+  function validate(s) {
+    const e = {};
+    if (s === 1) {
+      if (!data.pickup.trim() || data.pickup.length < 3) e.pickup = "Adresse requise (min. 3 caractères)";
+      if (!data.dropoff.trim() || data.dropoff.length < 3) e.dropoff = "Adresse requise (min. 3 caractères)";
+    }
+    if (s === 2 && data.timing === "later") {
+      if (!data.date) e.date = "Choisissez une date";
+      if (!data.time) e.time = "Choisissez une heure";
+    }
+    if (s === 3) {
+      if (!data.name.trim()) e.name = "Votre nom est requis";
+      if (!data.phone.trim()) e.phone = "Votre téléphone est requis";
+      if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) e.email = "Email invalide";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function next() { if (validate(step)) setStep(s => s + 1); }
+  function back() { setStep(s => s - 1); }
+  function submit() { setSent(true); }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)", overflowY: "auto" }}>
+      {/* NAV */}
+      <nav style={{ position: "sticky", top: 0, background: "rgba(255,255,255,.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)", zIndex: 100, boxShadow: "0 1px 12px rgba(0,0,0,.05)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
+          <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Retour
+          </button>
+          <Logo />
+          <div style={{ width: 80 }} />
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "60px 40px", display: "grid", gridTemplateColumns: "1fr 420px", gap: 48, alignItems: "start" }}>
+        {/* Driver info */}
+        <div>
+          {/* Hero */}
+          <div style={{ display: "flex", gap: 24, alignItems: "flex-start", marginBottom: 40 }}>
+            <div style={{ width: 80, height: 80, borderRadius: 16, background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, flexShrink: 0, position: "relative" }}>
+              J
+              <span style={{ position: "absolute", bottom: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: tweaks.greenColor, border: "3px solid var(--bg)", boxShadow: `0 0 8px ${tweaks.greenColor}` }} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: "-.03em" }}>{tweaks.driverName}</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,180,0,.12)", border: "1px solid rgba(255,180,0,.25)", borderRadius: 6, padding: "3px 10px" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffb400" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#ffb400" }}>4.9</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: tweaks.accentColor, marginBottom: 8 }}>Chauffeur privé · Île-de-France</div>
+              <div style={{ display: "flex", gap: 16, fontSize: 13, color: "var(--muted)" }}>
+                <span>📍 Paris</span>
+                <span>47 avis clients</span>
+                <span>Facture disponible</span>
+              </div>
+            </div>
+          </div>
+
+          <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7, marginBottom: 40, maxWidth: 520 }}>
+            Chauffeur privé depuis 5 ans, je vous accompagne dans tous vos déplacements en Île-de-France avec professionnalisme et discrétion.
+          </p>
+
+          {/* Vehicle */}
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Véhicule</h3>
+            <div className="card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ fontSize: 28 }}>🚗</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>Mercedes-Benz Classe E · Noir</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>3 passagers · Wifi · Eau · Chargeur</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed routes */}
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Trajets fixes</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { from: "Paris", to: "CDG", price: "75 €" },
+                { from: "Paris", to: "Orly", price: "65 €" },
+                { from: "Paris", to: "Demi-journée", price: "300 €" },
+              ].map(r => (
+                <div key={r.to} className="card" style={{ padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 14 }}><span style={{ fontWeight: 600 }}>{r.from}</span> <span style={{ color: "var(--muted)" }}>→</span> <span style={{ fontWeight: 600 }}>{r.to}</span></div>
+                  <span style={{ fontWeight: 800, fontSize: 15 }}>{r.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reviews */}
+          <div>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Avis clients</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { name: "Sophie M.", note: "Ponctuel, discret, véhicule impeccable. Je recommande vivement.", stars: 5 },
+                { name: "Marc D.", note: "Service premium, exactement ce qu'il me fallait pour mes déplacements pro.", stars: 5 },
+              ].map(r => (
+                <div key={r.name} className="card" style={{ padding: "16px 20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>{r.name}</span>
+                    <div style={{ display: "flex", gap: 2 }}>
+                      {[...Array(r.stars)].map((_, i) => <svg key={i} width="12" height="12" viewBox="0 0 24 24" fill="#ffb400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{r.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Booking form */}
+        <div style={{ position: "sticky", top: 84 }}>
+          {sent ? (
+            <div className="card scale-in" style={{ padding: 32, textAlign: "center" }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: tweaks.greenColor, margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 24px ${tweaks.greenColor}60`, animation: "successPop .6s cubic-bezier(.34, 1.56, .64, 1)" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: 30, animation: "checkDraw .5s .25s both ease-out" }}><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h3 style={{ fontSize: 22, fontWeight: 900, marginBottom: 8 }}>Demande envoyée !</h3>
+              <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 24, lineHeight: 1.6 }}>Votre chauffeur vous contactera très rapidement.</p>
+              <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 16, marginBottom: 24, textAlign: "left" }}>
+                {[["Départ", data.pickup], ["Arrivée", data.dropoff], ["Quand", data.timing === "now" ? "Dès que possible" : `${data.date} à ${data.time}`]].map(([l, v]) => (
+                  <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                    <span style={{ color: "var(--muted)", fontWeight: 600 }}>{l}</span>
+                    <span style={{ fontWeight: 600, maxWidth: "60%", textAlign: "right" }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+              <button className="btn-ghost" style={{ width: "100%" }} onClick={() => { setSent(false); setStep(1); setData({ pickup: "", dropoff: "", timing: "now", date: "", time: "", name: "", phone: "", email: "", comment: "" }); }}>Faire une autre demande</button>
+            </div>
+          ) : (
+            <div className="card" style={{ overflow: "hidden" }}>
+              {/* Header */}
+              <div style={{ padding: "24px 24px 16px" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Réserver une course</div>
+                <div style={{ fontSize: 13, color: "var(--muted)" }}>Réponse sous quelques minutes.</div>
+              </div>
+
+              {/* Progress */}
+              <div style={{ padding: "0 24px 20px" }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {[...Array(totalSteps)].map((_, i) => (
+                    <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i + 1 <= step ? tweaks.accentColor : "var(--border)", transition: "background .3s" }} />
+                  ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>
+                  <span>Étape {step}/{totalSteps}</span>
+                  <span>{["Trajet","Quand","Vos infos","Confirmation"][step-1]}</span>
+                </div>
+              </div>
+
+              {/* Steps */}
+              <div className="slide-in-right" key={step} style={{ padding: "0 24px", minHeight: 200 }}>
+                {step === 1 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <FormField label="Adresse de départ" error={errors.pickup}>
+                      <input type="text" value={data.pickup} onChange={e => update("pickup", e.target.value)} placeholder="Ex: 15 rue de Rivoli, Paris" />
+                    </FormField>
+                    <FormField label="Adresse d'arrivée" error={errors.dropoff}>
+                      <input type="text" value={data.dropoff} onChange={e => update("dropoff", e.target.value)} placeholder="Ex: Aéroport CDG Terminal 2" />
+                    </FormField>
+                  </div>
+                )}
+                {step === 2 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      {[["now","Maintenant"], ["later","Plus tard"]].map(([v, l]) => (
+                        <button key={v} onClick={() => update("timing", v)} style={{ padding: "14px", borderRadius: 8, border: `2px solid ${data.timing === v ? tweaks.accentColor : "var(--border)"}`, background: data.timing === v ? `${tweaks.accentColor}18` : "var(--surface2)", color: data.timing === v ? tweaks.accentColor : "var(--muted)", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all .15s" }}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                    {data.timing === "later" && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <FormField label="Date" error={errors.date}>
+                          <input type="date" value={data.date} onChange={e => update("date", e.target.value)} min={new Date().toISOString().split("T")[0]} />
+                        </FormField>
+                        <FormField label="Heure" error={errors.time}>
+                          <input type="time" value={data.time} onChange={e => update("time", e.target.value)} />
+                        </FormField>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {step === 3 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <FormField label="Votre nom" error={errors.name}>
+                      <input type="text" value={data.name} onChange={e => update("name", e.target.value)} placeholder="Jean Martin" />
+                    </FormField>
+                    <FormField label="Téléphone" error={errors.phone}>
+                      <input type="tel" value={data.phone} onChange={e => update("phone", e.target.value)} placeholder="06 12 34 56 78" />
+                    </FormField>
+                    <FormField label="Email (optionnel)" error={errors.email}>
+                      <input type="email" value={data.email} onChange={e => update("email", e.target.value)} placeholder="jean@email.com" />
+                    </FormField>
+                    <FormField label="Commentaire (optionnel)">
+                      <textarea rows={2} value={data.comment} onChange={e => update("comment", e.target.value)} placeholder="Nombre de bagages, siège enfant..." style={{ resize: "none" }} />
+                    </FormField>
+                  </div>
+                )}
+                {step === 4 && (
+                  <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 16 }}>
+                    {[["Départ", data.pickup], ["Arrivée", data.dropoff], ["Quand", data.timing === "now" ? "Dès que possible" : `${data.date} à ${data.time}`], ["Nom", data.name], ["Téléphone", data.phone]].filter(([,v]) => v).map(([l, v]) => (
+                      <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                        <span style={{ color: "var(--muted)", fontWeight: 600 }}>{l}</span>
+                        <span style={{ fontWeight: 600, maxWidth: "60%", textAlign: "right" }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{ padding: 24, display: "flex", gap: 8, marginTop: 16 }}>
+                {step > 1 && <button className="btn-ghost" style={{ padding: "12px 20px", fontSize: 14 }} onClick={back}>Retour</button>}
+                {step < totalSteps
+                  ? <button className="btn-black" style={{ flex: 1, fontSize: 14 }} onClick={next}>Continuer</button>
+                  : <button className="btn-black" style={{ flex: 1, fontSize: 14 }} onClick={submit}>Envoyer ma demande</button>
+                }
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
+function Logo({ size = "md", color }) {
+  const big = size !== "sm";
+  const fg = color || "var(--text)";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: big ? 10 : 8, cursor: "pointer" }}>
+      <div style={{ width: big ? 30 : 24, height: big ? 30 : 24, borderRadius: "50%", background: fg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" }}>
+        <span className="display" style={{ fontSize: big ? 16 : 13, fontWeight: 500, fontStyle: "italic", color: "var(--bg)", lineHeight: 1, marginTop: 1 }}>P</span>
+      </div>
+      <span style={{ fontSize: big ? 17 : 15, fontWeight: 600, letterSpacing: "-.02em", color: fg }}>Privé<span style={{ fontWeight: 400, opacity: .65 }}>chauffeur</span></span>
+    </div>
+  );
+}
+
+function FormField({ label, error, children }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>{label}</label>
+      {children}
+      {error && <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 600, marginTop: 4 }}>{error}</div>}
+    </div>
+  );
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
