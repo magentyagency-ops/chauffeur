@@ -17,10 +17,13 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [localPhoto, setLocalPhoto] = useState<string | null>(null);
 
   useEffect(() => {
-    // Hack pour le mode dev : récupérer la photo mockée depuis le localStorage si elle n'est pas encore en BDD
-    if (!driver.profilePhotoUrl && driver.user_id) {
-      const savedPhoto = localStorage.getItem("privechauffeur_profile_photo_" + driver.user_id);
-      if (savedPhoto) setLocalPhoto(savedPhoto);
+    try {
+      if (!driver.profilePhotoUrl && driver.user_id) {
+        const savedPhoto = localStorage.getItem("privechauffeur_profile_photo_" + driver.user_id);
+        if (savedPhoto) setLocalPhoto(savedPhoto);
+      }
+    } catch (e) {
+      console.error("Local storage not available", e);
     }
   }, [driver]);
 
@@ -48,31 +51,31 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative">
+    <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative flex flex-col">
       
       {/* 1. HERO IMAGE BACKGROUND */}
       <div className="absolute top-0 left-0 w-full h-[65vh] z-0 overflow-hidden">
         <img 
           src={photoSrc} 
           alt={driver.publicName} 
-          className="w-full h-full object-cover animate-in fade-in zoom-in duration-1000" 
+          className="w-full h-full object-cover" 
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black" />
       </div>
 
       {/* Container simulating mobile constraints but centered on desktop */}
-      <div className="max-w-md mx-auto min-h-screen relative z-10 flex flex-col p-5">
+      <div className="max-w-md mx-auto min-h-[100dvh] relative z-10 flex flex-col p-5 w-full">
         
         {/* CONTENU PRINCIPAL POUSSÉ VERS LE BAS */}
-        <div className="flex-1 flex flex-col justify-end pb-24">
+        <div className="flex-1 flex flex-col justify-end pb-12 sm:pb-24">
           
           {/* TEXTE PRINCIPAL */}
-          <h1 className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display animate-in slide-in-from-bottom-4 fade-in duration-700">
+          <h1 className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display">
             Où souhaitez-<br/>vous aller ?
           </h1>
-
+          
           {/* FORMULAIRE (FLOATING CARD) */}
-          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300 fill-mode-both ${cardBg}`}>
+          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}>
             
             {/* Top Notch for Timing */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-1 flex items-center gap-1 z-20">
@@ -220,7 +223,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           </div>
 
           {/* CTA BOUTON */}
-          <div className="flex animate-in slide-in-from-bottom-4 fade-in duration-700 delay-500 fill-mode-both">
+          <div className="flex">
             <button 
               onClick={handleSubmit}
               disabled={sending}
@@ -237,7 +240,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         {/* MODAL SUCCESS */}
         {sent && (
           <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-[#1C1C1E] p-6 rounded-[2rem] max-w-sm w-full text-center border border-white/10 animate-in zoom-in-95 fade-in duration-300">
+            <div className="bg-[#1C1C1E] p-6 rounded-[2rem] max-w-sm w-full text-center border border-white/10">
               <div className="w-16 h-16 bg-[#34D399] text-black rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
@@ -248,12 +251,6 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         )}
 
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        body, html {
-          background-color: #000000 !important;
-        }
-      `}} />
     </div>
   );
 }
