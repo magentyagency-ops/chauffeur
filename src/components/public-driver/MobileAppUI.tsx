@@ -125,7 +125,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                   className="relative flex flex-col gap-2 pt-3"
                 >
                   {/* Top Notch for Timing */}
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-1 flex items-center gap-1 z-20">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-0.5 flex items-center gap-1 z-20">
                     <button 
                       onClick={() => { setTiming("now"); setShowDatePicker(false); }}
                       className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "now" && !showDatePicker ? "bg-white text-black" : "text-gray-400 hover:text-white"}`}
