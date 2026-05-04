@@ -67,6 +67,61 @@ export default function MarketingPage() {
           {activeTab === "loyalty" && <LoyaltySection loyalty={state.loyalty} onUpdate={(loyalty) => updateState({ ...state, loyalty })} />}
           {activeTab === "subscriptions" && <SubscriptionsSection subscriptions={state.subscriptions} onUpdate={(subscriptions) => updateState({ ...state, subscriptions })} />}
         </div>
+
+        {/* Share Section (QR Code) */}
+        <section className="pt-12 border-t border-border">
+          <div className="card p-6 md:p-10 flex flex-col md:flex-row items-center gap-10 bg-surface-alt">
+            <div className="shrink-0 space-y-4 text-center">
+              <div className="w-48 h-48 bg-white p-4 rounded-2xl shadow-xl mx-auto flex items-center justify-center">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/jean-dupont` : '')}`} 
+                  alt="QR Code"
+                  className="w-full h-full"
+                />
+              </div>
+              <button 
+                onClick={() => {
+                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/chauffeur/jean-dupont')}`;
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'qrcode-privechauffeur.png';
+                  link.target = '_blank';
+                  link.click();
+                }}
+                className="btn-secondary !text-[12px] w-full"
+              >
+                Télécharger le QR Code
+              </button>
+            </div>
+            
+            <div className="flex-1 space-y-4">
+              <h3 className="text-2xl font-bold tracking-tight">Votre carte de visite digitale</h3>
+              <p className="text-muted text-[15px] leading-relaxed">
+                Montrez ce QR Code à vos clients à la fin d'une course. Ils pourront réserver leur prochain trajet, s'inscrire à votre programme de fidélité ou souscrire à un abonnement VIP en un clin d'œil.
+              </p>
+              <div className="space-y-2 pt-2">
+                <label className="label">Lien direct de votre profil</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/jean-dupont` : ''} 
+                    className="input flex-1 !bg-surface !border-border text-[13px]" 
+                  />
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.origin + '/chauffeur/jean-dupont');
+                      alert("Lien copié !");
+                    }}
+                    className="btn-primary !py-2 !px-4 !text-[12px]"
+                  >
+                    Copier
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );

@@ -4,18 +4,23 @@ import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { mockAvailability, isAvailabilityActive, getTimeRemaining, getPersistedAvailability, savePersistedAvailability } from "@/lib/mockAvailability";
 import { getDriverBookings } from "@/lib/actions/bookings";
+import { getPersistedProfile } from "@/lib/mockProfile";
 import Link from "next/link";
 
-export default function DashboardContent({ user, profile }: { user: any; profile: any }) {
+export default function DashboardContent({ user, profile: initialProfile }: { user: any; profile: any }) {
   const [availability, setAvailability] = useState(mockAvailability);
+  const [profile, setProfile] = useState(initialProfile);
   const [isActive, setIsActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; label: string } | null>(null);
   
   useEffect(() => {
-    const saved = getPersistedAvailability();
-    setAvailability(saved);
-    setIsActive(isAvailabilityActive(saved));
-    setTimeRemaining(getTimeRemaining(saved.available_until));
+    const savedAvail = getPersistedAvailability();
+    setAvailability(savedAvail);
+    setIsActive(isAvailabilityActive(savedAvail));
+    setTimeRemaining(getTimeRemaining(savedAvail.available_until));
+
+    const savedProfile = getPersistedProfile();
+    setProfile(savedProfile);
   }, []);
 
   useEffect(() => {
@@ -46,7 +51,7 @@ export default function DashboardContent({ user, profile }: { user: any; profile
     load();
   }, []);
 
-  const firstName = profile?.full_name?.split(" ")[0] || "Chauffeur";
+  const firstName = profile?.fullName?.split(" ")[0] || profile?.full_name?.split(" ")[0] || "Chauffeur";
 
   return (
     <>
@@ -99,15 +104,55 @@ export default function DashboardContent({ user, profile }: { user: any; profile
           </div>
         </section>
 
-        {/* Share Link */}
-        <section className="p-6 bg-foreground text-background border border-border rounded-[14px] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h4 className="text-[13px] font-bold uppercase tracking-widest opacity-40 mb-2">Votre lien</h4>
-            <div className="text-[15px] font-mono opacity-70">privechauffeur.com/{profile?.public_slug || "..."}</div>
+        {/* Marketing Summary & Quick QR */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 p-6 bg-foreground text-background rounded-[14px] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10 flex-1">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-50 mb-3">Statut Marketing</h4>
+              <div className="flex gap-6">
+                <div>
+                  <div className="text-2xl font-bold">12</div>
+                  <div className="text-[15px] font-mono opacity-70">privechauffeur.com/{profile?.publicSlug || profile?.public_slug || "..."}</div>
+                </div>
+                <div className="w-px h-10 bg-white/10" />
+                <div>
+                  <div className="text-2xl font-bold">7</div>
+                  <div className="text-[10px] uppercase font-bold opacity-50">Clients Fidèles</div>
+                </div>
+                <div className="w-px h-10 bg-white/10" />
+                <div>
+                  <div className="text-2xl font-bold">3</div>
+                  <div className="text-[10px] uppercase font-bold opacity-50">Abonnés VIP</div>
+                </div>
+              </div>
+              <div className="mt-5 flex gap-2">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.origin + '/chauffeur/' + (profile?.public_slug || 'jean-dupont'));
+                    alert("Lien copié !");
+                  }}
+                  className="py-1.5 px-3 rounded-lg bg-white/10 text-white text-[11px] font-bold hover:bg-white/20 transition-colors"
+                >
+                  Copier le lien
+                </button>
+                <Link href="/dashboard/marketing" className="py-1.5 px-3 rounded-lg bg-accent text-background text-[11px] font-bold hover:opacity-90 transition-opacity">
+                  Gérer les offres
+                </Link>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none py-2 px-4 rounded-lg bg-white/10 text-white text-[13px] font-semibold hover:bg-white/20 transition-colors">Copier</button>
-            <button className="flex-1 sm:flex-none py-2 px-4 rounded-lg bg-success text-background text-[13px] font-bold hover:opacity-90 transition-opacity">WhatsApp</button>
+
+          <div className="p-6 bg-surface-alt border border-border rounded-[14px] flex flex-col items-center justify-center text-center group cursor-pointer hover:border-foreground/20 transition-all" onClick={() => window.open(`/chauffeur/${profile?.public_slug || 'jean-dupont'}`, '_blank')}>
+            <div className="w-20 h-20 bg-white p-2 rounded-lg shadow-sm mb-3 transition-transform group-hover:scale-105">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/chauffeur/${profile?.public_slug || 'jean-dupont'}` : '')}`} 
+                alt="QR Code"
+                className="w-full h-full"
+              />
+            </div>
+            <span className="text-[13px] font-bold">Votre QR Code</span>
+            <span className="text-[10px] text-muted font-medium">Cliquez pour voir votre page</span>
           </div>
         </section>
 
