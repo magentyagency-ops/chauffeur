@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createBooking, getBookingStatus } from "@/lib/actions/bookings";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createBooking } from "@/lib/actions/bookings";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,7 +15,11 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [sending, setSending] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
+  const statusRef = useRef<string | null>(null);
   const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
+
+  // Keep ref in sync with state
+  useEffect(() => { statusRef.current = bookingStatus; }, [bookingStatus]);
 
   const cardBg = "bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
   const inputBg = "bg-white/5 backdrop-blur-md shadow-inner border border-white/5";
@@ -47,32 +51,45 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     }
   };
 
-  // STATUS TRACKING (Realtime + Polling fallback)
+  // Direct client-side polling function (bypasses server action RLS issues)
+  const pollStatus = useCallback(async (bookingId: string) => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("status")
+        .eq("id", bookingId)
+        .single();
+      if (!error && data?.status && data.status !== statusRef.current) {
+        setBookingStatus(data.status);
+      }
+    } catch (e) {
+      console.error("Poll error:", e);
+    }
+  }, []);
+
+  // STATUS TRACKING — stable effect, runs once per booking
   useEffect(() => {
     if (!activeBookingId) return;
-    if (bookingStatus === "accepted") return;
 
-    // 1. Polling every 2 seconds for maximum reactivity
-    const interval = setInterval(async () => {
-      try {
-        const latestStatus = await getBookingStatus(activeBookingId);
-        if (latestStatus && latestStatus !== bookingStatus) {
-          setBookingStatus(latestStatus);
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
+    const supabase = createClient();
+    let stopped = false;
+
+    // 1. Polling every 2s directly from browser (no server action)
+    const interval = setInterval(() => {
+      if (!stopped && statusRef.current !== "accepted") {
+        pollStatus(activeBookingId);
       }
     }, 2000);
 
     // 2. Realtime subscription
-    const supabase = createClient();
     const channel = supabase
-      .channel(`booking-updates-${activeBookingId}`)
+      .channel(`booking-live-${activeBookingId}`)
       .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${activeBookingId}` },
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bookings", filter: `id=eq.${activeBookingId}` },
         (payload) => {
-          if (payload.new.status && payload.new.status !== bookingStatus) {
+          if (payload.new?.status) {
             setBookingStatus(payload.new.status);
           }
         }
@@ -80,10 +97,11 @@ export default function MobileAppUI({ driver }: { driver: any }) {
       .subscribe();
 
     return () => {
+      stopped = true;
       clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, [activeBookingId, bookingStatus]);
+  }, [activeBookingId, pollStatus]);
 
   return (
     <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative flex flex-col">
