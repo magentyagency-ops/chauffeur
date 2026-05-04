@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBooking } from "@/lib/actions/bookings";
+import { createBooking, getBookingStatus } from "@/lib/actions/bookings";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
@@ -60,11 +60,13 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     }
   };
 
-  // REAL-TIME SUBSCRIPTION
+  // REAL-TIME SUBSCRIPTION + POLLING FALLBACK
   useEffect(() => {
-    if (!activeBookingId) return;
+    if (!activeBookingId || bookingStatus === "accepted") return;
 
     const supabase = createClient();
+    
+    // 1. Realtime
     const channel = supabase
       .channel(`booking-${activeBookingId}`)
       .on(
@@ -77,15 +79,24 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         },
         (payload) => {
           const newStatus = payload.new.status;
-          setBookingStatus(newStatus);
+          if (newStatus) setBookingStatus(newStatus);
         }
       )
       .subscribe();
 
+    // 2. Polling Fallback (every 3 seconds)
+    const interval = setInterval(async () => {
+      const latestStatus = await getBookingStatus(activeBookingId);
+      if (latestStatus && latestStatus !== bookingStatus) {
+        setBookingStatus(latestStatus);
+      }
+    }, 3000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [activeBookingId]);
+  }, [activeBookingId, bookingStatus]);
 
   return (
     <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative flex flex-col">

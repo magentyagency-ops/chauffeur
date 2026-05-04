@@ -91,6 +91,23 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
   }
 }
 
+// ─── getBookingStatus (Public) ──────────────────────────────────────────
+export async function getBookingStatus(bookingId: string) {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("status")
+      .eq("id", bookingId)
+      .single();
+    
+    if (error || !data) return null;
+    return data.status;
+  } catch {
+    return null;
+  }
+}
+
 // ─── updateBookingStatus ────────────────────────────────────────────────
 export async function updateBookingStatus(input: {
   bookingId: string;
