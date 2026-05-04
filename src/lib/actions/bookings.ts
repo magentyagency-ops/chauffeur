@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 export type CreateBookingInput = {
@@ -81,6 +82,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       return { success: false, error: "Erreur lors de la création de la réservation.", errorCode: "NETWORK_ERROR" };
     }
 
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/bookings");
     return { success: true, booking: { id: result.booking_id } };
   } catch (e) {
     console.error("createBooking error:", e);

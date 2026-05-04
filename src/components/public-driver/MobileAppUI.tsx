@@ -34,8 +34,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const whiteBtn = "bg-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"; 
   const handleSubmit = async () => {
     if (timing === "later" && (!date || !time)) return alert("Veuillez indiquer la date et l'heure");
+    if (!pickup || !dropoff) return alert("Veuillez indiquer le départ et l'arrivée");
     setSending(true);
-    await createBooking({
+    const result = await createBooking({
       driverSlug: driver.slug,
       clientName: "Client Privé",
       clientPhone: "0600000000",
@@ -45,9 +46,17 @@ export default function MobileAppUI({ driver }: { driver: any }) {
       bookingType: timing,
       scheduledAt: timing === "now" ? new Date().toISOString() : `${date}T${time}:00.000Z`,
     });
+
     setSending(false);
-    setSent(true);
-    setTimeout(() => setSent(false), 3000);
+    
+    if (result.success) {
+      setSent(true);
+      setTimeout(() => setSent(false), 3000);
+      setPickup("");
+      setDropoff("");
+    } else {
+      alert(result.error || "Une erreur est survenue lors de la réservation.");
+    }
   };
 
   return (
