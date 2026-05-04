@@ -51,19 +51,14 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     <div className="min-h-screen bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative">
       
       {/* 1. HERO IMAGE BACKGROUND */}
-      <motion.div 
-        initial={{ scale: 1.05, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute top-0 left-0 w-full h-[65vh] z-0"
-      >
+      <div className="absolute top-0 left-0 w-full h-[65vh] z-0 overflow-hidden">
         <img 
           src={photoSrc} 
           alt={driver.publicName} 
-          className="w-full h-full object-cover" 
+          className="w-full h-full object-cover animate-in fade-in zoom-in duration-1000" 
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black" />
-      </motion.div>
+      </div>
 
       {/* Container simulating mobile constraints but centered on desktop */}
       <div className="max-w-md mx-auto min-h-screen relative z-10 flex flex-col p-5">
@@ -72,22 +67,12 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         <div className="flex-1 flex flex-col justify-end pb-24">
           
           {/* TEXTE PRINCIPAL */}
-          <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display"
-          >
+          <h1 className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display animate-in slide-in-from-bottom-4 fade-in duration-700">
             Où souhaitez-<br/>vous aller ?
-          </motion.h1>
+          </h1>
 
           {/* FORMULAIRE (FLOATING CARD) */}
-          <motion.div 
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}
-          >
+          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300 fill-mode-both ${cardBg}`}>
             
             {/* Top Notch for Timing */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-1 flex items-center gap-1 z-20">
@@ -258,17 +243,13 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         {/* MODAL SUCCESS */}
         {sent && (
           <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-[#1C1C1E] p-6 rounded-[2rem] max-w-sm w-full text-center border border-white/10"
-            >
+            <div className="bg-[#1C1C1E] p-6 rounded-[2rem] max-w-sm w-full text-center border border-white/10 animate-in zoom-in-95 fade-in duration-300">
               <div className="w-16 h-16 bg-[#34D399] text-black rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <h3 className="text-2xl font-bold mb-2">Demande envoyée</h3>
               <p className="text-gray-400">Le chauffeur vous contactera très rapidement pour confirmer.</p>
-            </motion.div>
+            </div>
           </div>
         )}
 
