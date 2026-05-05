@@ -190,6 +190,7 @@ export async function updateBookingStatus(input: {
       message: `${booking.client_name} — ${notifTitles[input.newStatus] || input.newStatus}.`,
     });
 
+    revalidatePath("/dashboard", "layout");
     return { success: true, booking: updated };
   } catch (e) {
     console.error("updateBookingStatus error:", e);
