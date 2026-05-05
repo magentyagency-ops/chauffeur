@@ -28,6 +28,8 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<"pickup" | "dropoff" | null>(null);
   const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true); // Default to true for SSR
   const statusRef = useRef<string | null>(null);
   const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
@@ -60,6 +62,57 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const cardBg = "bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
   const inputBg = "bg-white/5 backdrop-blur-md shadow-inner border border-white/5";
   const whiteBtn = "bg-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"; 
+
+  // Address Autocomplete function
+  const fetchSuggestions = async (query: string) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=fr`);
+      const data = await res.json();
+      if (data && data.features) {
+        const results = data.features.map((f: any) => {
+          const p = f.properties;
+          const name = p.name || "";
+          const street = p.street || "";
+          const city = p.city || p.town || p.village || "";
+          const postcode = p.postcode || "";
+          
+          // Format nicely
+          let label = name;
+          if (street && street !== name) label = `${street}, ${label}`;
+          if (city) label = `${label}, ${city}`;
+          if (postcode) label = `${label} ${postcode}`;
+          
+          return label;
+        });
+        setSuggestions(results);
+      }
+    } catch (e) {
+      console.error("Autocomplete error:", e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const activeValue = activeInput === "pickup" ? pickup : activeInput === "dropoff" ? dropoff : "";
+    if (!activeValue || activeValue.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetchSuggestions(activeValue);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [pickup, dropoff, activeInput]);
 
   const handleSubmit = async () => {
     if (!clientName.trim()) return alert("Veuillez indiquer votre nom pour le chauffeur.");
@@ -327,26 +380,46 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                             </button>
                           </div>
                           
-                          {/* Dropdown Adresses Récentes */}
+                          {/* Dropdown Suggestions & Récents */}
                           <AnimatePresence>
-                            {activeInput === "pickup" && recentAddresses.length > 0 && (
+                            {activeInput === "pickup" && (suggestions.length > 0 || recentAddresses.length > 0) && (
                               <motion.div 
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl"
+                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl overflow-hidden"
                               >
-                                <p className="text-xs text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
-                                {recentAddresses.map((addr, idx) => (
-                                  <button 
-                                    key={idx}
-                                    onClick={() => { setPickup(addr); setActiveInput(null); }}
-                                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                    <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
-                                  </button>
-                                ))}
+                                {suggestions.length > 0 ? (
+                                  <>
+                                    <p className="text-[10px] text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Suggestions</p>
+                                    {suggestions.map((addr, idx) => (
+                                      <button 
+                                        key={`sug-${idx}`}
+                                        onClick={() => { setPickup(addr); setSuggestions([]); setActiveInput(null); }}
+                                        className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 group"
+                                      >
+                                        <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/20">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        </div>
+                                        <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                      </button>
+                                    ))}
+                                  </>
+                                ) : recentAddresses.length > 0 && (
+                                  <>
+                                    <p className="text-[10px] text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
+                                    {recentAddresses.map((addr, idx) => (
+                                      <button 
+                                        key={`rec-${idx}`}
+                                        onClick={() => { setPickup(addr); setActiveInput(null); }}
+                                        className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+                                      >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                      </button>
+                                    ))}
+                                  </>
+                                )}
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -369,26 +442,46 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                             />
                           </div>
 
-                          {/* Dropdown Adresses Récentes */}
+                          {/* Dropdown Suggestions & Récents */}
                           <AnimatePresence>
-                            {activeInput === "dropoff" && recentAddresses.length > 0 && (
+                            {activeInput === "dropoff" && (suggestions.length > 0 || recentAddresses.length > 0) && (
                               <motion.div 
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl"
+                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl overflow-hidden"
                               >
-                                <p className="text-xs text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
-                                {recentAddresses.map((addr, idx) => (
-                                  <button 
-                                    key={idx}
-                                    onClick={() => { setDropoff(addr); setActiveInput(null); }}
-                                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                    <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
-                                  </button>
-                                ))}
+                                {suggestions.length > 0 ? (
+                                  <>
+                                    <p className="text-[10px] text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Suggestions</p>
+                                    {suggestions.map((addr, idx) => (
+                                      <button 
+                                        key={`sug-drop-${idx}`}
+                                        onClick={() => { setDropoff(addr); setSuggestions([]); setActiveInput(null); }}
+                                        className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 group"
+                                      >
+                                        <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/20">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        </div>
+                                        <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                      </button>
+                                    ))}
+                                  </>
+                                ) : recentAddresses.length > 0 && (
+                                  <>
+                                    <p className="text-[10px] text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
+                                    {recentAddresses.map((addr, idx) => (
+                                      <button 
+                                        key={`rec-drop-${idx}`}
+                                        onClick={() => { setDropoff(addr); setActiveInput(null); }}
+                                        className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+                                      >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                      </button>
+                                    ))}
+                                  </>
+                                )}
                               </motion.div>
                             )}
                           </AnimatePresence>
