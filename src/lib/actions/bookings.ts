@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendPushNotification } from "./notifications";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 export type CreateBookingInput = {
@@ -80,6 +81,15 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     if (rpcError) {
       console.error("RPC Error:", rpcError);
       return { success: false, error: "Erreur lors de la création de la réservation.", errorCode: "NETWORK_ERROR" };
+    }
+
+    // Trigger Push Notification for the driver (Async)
+    if (result?.booking_id) {
+      sendPushNotification(driver.id, {
+        title: "Nouvelle demande de course !",
+        body: `${input.clientName} demande : ${input.pickupAddress.split(',')[0]} → ${input.destinationAddress.split(',')[0]}`,
+        url: `/dashboard`
+      }).catch(err => console.error("Push notification trigger error:", err));
     }
 
     // Return immediately to make the client UI ultra-fast.
