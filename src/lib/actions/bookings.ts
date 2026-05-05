@@ -85,11 +85,14 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
 
     // Trigger Push Notification for the driver (Async)
     if (result?.booking_id) {
+      console.log("Triggering push notification for driver:", driver.id, "Booking:", result.booking_id);
       sendPushNotification(driver.id, {
         title: "Nouvelle demande de course !",
         body: `${input.clientName} demande : ${input.pickupAddress.split(',')[0]} → ${input.destinationAddress.split(',')[0]}`,
         url: `/dashboard`
       }).catch(err => console.error("Push notification trigger error:", err));
+    } else {
+      console.log("No booking_id returned from RPC, skipping push. Result:", result);
     }
 
     // Return immediately to make the client UI ultra-fast.

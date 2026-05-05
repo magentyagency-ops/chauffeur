@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import webpush from "web-push";
 
 // Configurer web-push avec les clés VAPID
@@ -58,9 +59,9 @@ export async function savePushSubscription(subscription: any) {
 }
 
 export async function sendPushNotification(driverId: string, payload: { title: string; body: string; url?: string }) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   
-  console.log("Attempting push to driver:", driverId);
+  console.log("Attempting push to driver (Admin):", driverId);
 
   const { data: subscriptions, error: subError } = await supabase
     .from("push_subscriptions")
