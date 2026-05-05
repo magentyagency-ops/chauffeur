@@ -28,8 +28,18 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<"pickup" | "dropoff" | null>(null);
   const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+  const [isStandalone, setIsStandalone] = useState(true); // Default to true for SSR
   const statusRef = useRef<string | null>(null);
   const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
+
+  // Check if running in standalone mode (installed as PWA)
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      setIsStandalone(!!isStandaloneMode);
+    };
+    checkStandalone();
+  }, []);
 
   // Keep ref in sync with state
   useEffect(() => { statusRef.current = bookingStatus; }, [bookingStatus]);
@@ -137,6 +147,10 @@ export default function MobileAppUI({ driver }: { driver: any }) {
       supabase.removeChannel(channel);
     };
   }, [activeBookingId, pollStatus]);
+
+  if (!isStandalone) {
+    return <InstallPWAOverlay driver={driver} />;
+  }
 
   return (
     <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-white selection:text-black relative flex flex-col">
@@ -490,6 +504,94 @@ export default function MobileAppUI({ driver }: { driver: any }) {
               </button>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InstallPWAOverlay({ driver }: { driver: any }) {
+  const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
+  }, []);
+
+  return (
+    <div className="min-h-[100dvh] bg-black text-white flex flex-col relative overflow-hidden">
+      {/* Background with Driver Photo */}
+      <div className="absolute inset-0 z-0">
+        <img src={photoSrc} className="w-full h-full object-cover opacity-40 blur-sm scale-110" alt="" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-black" />
+      </div>
+
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto w-full">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="w-24 h-24 rounded-[2.5rem] overflow-hidden mx-auto mb-6 border-2 border-white/20 shadow-2xl">
+            <img src={photoSrc} className="w-full h-full object-cover" alt={driver.publicName} />
+          </div>
+          <h1 className="text-3xl font-[900] tracking-tight mb-2 font-display uppercase tracking-tighter">
+            {driver.publicName}
+          </h1>
+          <p className="text-gray-400 font-medium">Votre chauffeur privé personnel</p>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 w-full shadow-2xl relative overflow-hidden group"
+        >
+          {/* Subtle glow effect */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-700" />
+          
+          <h2 className="text-xl font-bold mb-6">Installez l'application</h2>
+          <p className="text-sm text-gray-400 mb-10 leading-relaxed px-2">
+            Pour réserver une course et suivre votre chauffeur en temps réel, veuillez ajouter cette page à votre écran d'accueil.
+          </p>
+
+          <div className="space-y-8 text-left">
+            {isIOS ? (
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
+                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                </div>
+                <div className="pt-1">
+                  <p className="text-sm font-bold text-white mb-1">1. Cliquez sur "Partager"</p>
+                  <p className="text-xs text-gray-500 font-medium">En bas au centre de votre Safari.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
+                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </div>
+                <div className="pt-1">
+                  <p className="text-sm font-bold text-white mb-1">1. Cliquez sur le menu</p>
+                  <p className="text-xs text-gray-500 font-medium">Les 3 points en haut à droite de Chrome.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              <div className="pt-1">
+                <p className="text-sm font-bold text-white mb-1">2. "Sur l'écran d'accueil"</p>
+                <p className="text-xs text-gray-500 font-medium">L'application s'installera instantanément.</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="mt-auto pt-12">
+           <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.3em] opacity-80">Expérience Privée Haut de Gamme</p>
         </div>
       </div>
     </div>
