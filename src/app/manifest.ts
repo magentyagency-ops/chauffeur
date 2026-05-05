@@ -5,7 +5,6 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'PrivéChauffeur Dashboard',
     short_name: 'Chauffeur',
     description: 'Gestion de votre clientèle privée',
-    start_url: '/dashboard',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#000000',
