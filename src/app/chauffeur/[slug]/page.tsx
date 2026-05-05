@@ -24,8 +24,6 @@ export default async function PublicDriverPage({ params }: { params: Promise<{ s
   const driver = {
     ...mockPublicDriver,
     // Override with real data from DB
-    id: dbProfile.id,
-    user_id: dbProfile.user_id,
     slug: dbProfile.public_slug,
     publicName: dbProfile.full_name,
     firstName: dbProfile.full_name?.split(" ")[0] || "Chauffeur",

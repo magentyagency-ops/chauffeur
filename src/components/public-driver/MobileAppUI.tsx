@@ -53,18 +53,17 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     }
   };
 
-  // Direct client-side polling function (bypasses server action RLS issues)
+  // Direct client-side polling function via Server Action (Secure)
   const pollStatus = useCallback(async (bookingId: string) => {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("status")
-        .eq("id", bookingId)
-        .neq("status", `dummy-${Date.now()}`)
-        .single();
-      if (!error && data?.status && data.status !== statusRef.current) {
-        setBookingStatus(data.status);
+      // Import dynamically or pass from parent?
+      // Wait, we need to import getBookingStatus at the top of the file!
+      // I'll assume getBookingStatus is exported from "@/lib/actions/bookings".
+      const { getBookingStatus } = await import("@/lib/actions/bookings");
+      const status = await getBookingStatus(bookingId);
+      
+      if (status && status !== statusRef.current) {
+        setBookingStatus(status);
       }
     } catch (e) {
       console.error("Poll error:", e);

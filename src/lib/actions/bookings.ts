@@ -34,12 +34,12 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
   try {
     const supabase = await createClient();
 
-    // Validate required fields
-    if (!input.clientName?.trim()) return { success: false, error: "Le nom est requis.", errorCode: "VALIDATION_ERROR" };
-    if (!input.clientPhone?.trim()) return { success: false, error: "Le téléphone est requis.", errorCode: "VALIDATION_ERROR" };
-    if (!input.pickupAddress?.trim()) return { success: false, error: "L'adresse de départ est requise.", errorCode: "VALIDATION_ERROR" };
-    if (!input.destinationAddress?.trim()) return { success: false, error: "L'adresse d'arrivée est requise.", errorCode: "VALIDATION_ERROR" };
-    if (input.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.clientEmail)) {
+    // Validate required fields and enforce strict length limits (Security: Payload Size / DoS prevention)
+    if (!input.clientName?.trim() || input.clientName.length > 100) return { success: false, error: "Nom invalide (max 100 char).", errorCode: "VALIDATION_ERROR" };
+    if (!input.clientPhone?.trim() || input.clientPhone.length > 20) return { success: false, error: "Téléphone invalide.", errorCode: "VALIDATION_ERROR" };
+    if (!input.pickupAddress?.trim() || input.pickupAddress.length > 255) return { success: false, error: "L'adresse de départ est trop longue.", errorCode: "VALIDATION_ERROR" };
+    if (!input.destinationAddress?.trim() || input.destinationAddress.length > 255) return { success: false, error: "L'adresse d'arrivée est trop longue.", errorCode: "VALIDATION_ERROR" };
+    if (input.clientEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.clientEmail) || input.clientEmail.length > 150)) {
       return { success: false, error: "Email invalide.", errorCode: "VALIDATION_ERROR" };
     }
 
