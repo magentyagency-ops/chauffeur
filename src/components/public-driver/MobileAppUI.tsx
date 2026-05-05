@@ -32,6 +32,12 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   // Keep ref in sync with state
   useEffect(() => { statusRef.current = bookingStatus; }, [bookingStatus]);
 
+  // Load saved client information from local storage (device cache)
+  useEffect(() => {
+    const savedName = localStorage.getItem("privechauffeur_client_name");
+    if (savedName) setClientName(savedName);
+  }, []);
+
   const cardBg = "bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
   const inputBg = "bg-white/5 backdrop-blur-md shadow-inner border border-white/5";
   const whiteBtn = "bg-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"; 
@@ -41,6 +47,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     if (timing === "later" && (!date || !time)) return alert("Veuillez indiquer la date et l'heure");
     if (!pickup || !dropoff) return alert("Veuillez indiquer le départ et l'arrivée");
     
+    // Save client info locally for next time
+    localStorage.setItem("privechauffeur_client_name", clientName.trim());
+
     setSending(true);
     const result = await createBooking({
       driverSlug: driver.slug,
