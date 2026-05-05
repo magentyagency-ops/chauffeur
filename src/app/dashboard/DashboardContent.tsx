@@ -88,10 +88,36 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
     load();
   }, []);
 
-  // Listen for incoming bookings in real-time
+  // Listen for incoming bookings (Realtime + Robust Polling)
   useEffect(() => {
     if (!profile?.id) return;
     const supabase = createClient();
+
+    // 1. Robust Polling (every 3s)
+    // Directly queries Supabase from the client to avoid Next.js cache issues
+    const interval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select("*")
+          .eq("driver_id", profile.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          setIncomingBooking((current: any) => {
+            // Don't interrupt if we are already showing this exact booking
+            if (current && current.id === data[0].id) return current;
+            return data[0];
+          });
+        }
+      } catch (err) {
+        console.error("Polling incoming booking error:", err);
+      }
+    }, 3000);
+
+    // 2. Realtime Subscription (if enabled on the database)
     const channel = supabase
       .channel("incoming-bookings")
       .on(
@@ -104,7 +130,6 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
         },
         (payload) => {
           if (payload.new.status === "pending") {
-            // Check if it's not already in the list
             setIncomingBooking(payload.new);
           }
         }
@@ -112,6 +137,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [profile?.id]);
