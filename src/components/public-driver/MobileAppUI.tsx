@@ -26,6 +26,8 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [sending, setSending] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
+  const [activeInput, setActiveInput] = useState<"pickup" | "dropoff" | null>(null);
+  const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
   const statusRef = useRef<string | null>(null);
   const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
 
@@ -36,6 +38,13 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   useEffect(() => {
     const savedName = localStorage.getItem("privechauffeur_client_name");
     if (savedName) setClientName(savedName);
+    
+    const savedAddresses = localStorage.getItem("privechauffeur_recent_addresses");
+    if (savedAddresses) {
+      try {
+        setRecentAddresses(JSON.parse(savedAddresses));
+      } catch (e) {}
+    }
   }, []);
 
   const cardBg = "bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
@@ -49,6 +58,11 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     
     // Save client info locally for next time
     localStorage.setItem("privechauffeur_client_name", clientName.trim());
+    
+    // Save recent addresses locally
+    const newAddresses = Array.from(new Set([pickup.trim(), dropoff.trim(), ...recentAddresses])).filter(Boolean).slice(0, 5);
+    setRecentAddresses(newAddresses);
+    localStorage.setItem("privechauffeur_recent_addresses", JSON.stringify(newAddresses));
 
     setSending(true);
     const result = await createBooking({
@@ -239,75 +253,131 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                         </div>
 
                         {/* Pickup */}
-                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
-                            <div className="w-2 h-2 bg-black rounded-full"></div>
-                          </div>
-                          <input 
-                            type="text" 
-                            placeholder="Lieu de départ" 
-                            value={pickup}
-                            onChange={e => setPickup(e.target.value)}
-                            className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
-                          />
-                          <button 
-                            onClick={() => {
-                              if ("geolocation" in navigator) {
-                                navigator.geolocation.getCurrentPosition(
-                                  async (pos) => {
-                                    setPickup("Recherche...");
-                                    const lat = pos.coords.latitude;
-                                    const lon = pos.coords.longitude;
-                                    try {
-                                      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                                      const data = await res.json();
-                                      if (data && data.address) {
-                                        const { house_number, road, city, town, village } = data.address;
-                                        const street = [house_number, road].filter(Boolean).join(" ");
-                                        const locality = city || town || village || "";
-                                        const shortAddress = [street, locality].filter(Boolean).join(", ");
-                                        setPickup(shortAddress || data.display_name);
-                                      } else if (data && data.display_name) {
-                                        setPickup(data.display_name);
-                                      } else {
+                        <div className="relative">
+                          <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
+                              <div className="w-2 h-2 bg-black rounded-full"></div>
+                            </div>
+                            <input 
+                              type="text" 
+                              placeholder="Lieu de départ" 
+                              value={pickup}
+                              onChange={e => setPickup(e.target.value)}
+                              onFocus={() => setActiveInput("pickup")}
+                              onBlur={() => setTimeout(() => setActiveInput(null), 200)}
+                              className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                            />
+                            <button 
+                              onClick={() => {
+                                if ("geolocation" in navigator) {
+                                  navigator.geolocation.getCurrentPosition(
+                                    async (pos) => {
+                                      setPickup("Recherche...");
+                                      const lat = pos.coords.latitude;
+                                      const lon = pos.coords.longitude;
+                                      try {
+                                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                                        const data = await res.json();
+                                        if (data && data.address) {
+                                          const { house_number, road, city, town, village } = data.address;
+                                          const street = [house_number, road].filter(Boolean).join(" ");
+                                          const locality = city || town || village || "";
+                                          const shortAddress = [street, locality].filter(Boolean).join(", ");
+                                          setPickup(shortAddress || data.display_name);
+                                        } else if (data && data.display_name) {
+                                          setPickup(data.display_name);
+                                        } else {
+                                          setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+                                        }
+                                      } catch (err) {
                                         setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
                                       }
-                                    } catch (err) {
-                                      setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
-                                    }
-                                  },
-                                  (error) => { 
-                                    setPickup(""); 
-                                    if (error.code === 1) {
-                                      alert("La géolocalisation est bloquée. Veuillez l'autoriser dans les réglages de votre navigateur.");
-                                    } else {
-                                      alert("Impossible de vous localiser.");
-                                    }
-                                  },
-                                  { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-                                );
-                              }
-                            }}
-                            className="p-1 text-white hover:bg-white/10 rounded-full transition-colors"
-                          >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
-                            </svg>
-                          </button>
+                                    },
+                                    (error) => { 
+                                      setPickup(""); 
+                                      if (error.code === 1) {
+                                        alert("La géolocalisation est bloquée. Veuillez l'autoriser dans les réglages de votre navigateur.");
+                                      } else {
+                                        alert("Impossible de vous localiser.");
+                                      }
+                                    },
+                                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                                  );
+                                }
+                              }}
+                              className="p-1 text-white hover:bg-white/10 rounded-full transition-colors"
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          {/* Dropdown Adresses Récentes */}
+                          <AnimatePresence>
+                            {activeInput === "pickup" && recentAddresses.length > 0 && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl"
+                              >
+                                <p className="text-xs text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
+                                {recentAddresses.map((addr, idx) => (
+                                  <button 
+                                    key={idx}
+                                    onClick={() => { setPickup(addr); setActiveInput(null); }}
+                                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
 
                         {/* Dropoff */}
-                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
-                            <div className="w-2 h-2 bg-black rounded-full"></div>
+                        <div className="relative">
+                          <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
+                              <div className="w-2 h-2 bg-black rounded-full"></div>
+                            </div>
+                            <input 
+                              type="text" 
+                              placeholder="Votre destination" 
+                              value={dropoff}
+                              onChange={e => setDropoff(e.target.value)}
+                              onFocus={() => setActiveInput("dropoff")}
+                              onBlur={() => setTimeout(() => setActiveInput(null), 200)}
+                              className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                            />
                           </div>
-                          <input 
-                            type="text" 
-                            placeholder="Votre destination" 
-                            value={dropoff}
-                            onChange={e => setDropoff(e.target.value)}
-                            className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
-                          />
+
+                          {/* Dropdown Adresses Récentes */}
+                          <AnimatePresence>
+                            {activeInput === "dropoff" && recentAddresses.length > 0 && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute top-[calc(100%+8px)] left-0 w-full bg-[#111] border border-white/10 rounded-2xl p-2 z-50 shadow-2xl"
+                              >
+                                <p className="text-xs text-gray-500 font-bold px-3 py-1 uppercase tracking-wider mb-1">Récents</p>
+                                {recentAddresses.map((addr, idx) => (
+                                  <button 
+                                    key={idx}
+                                    onClick={() => { setDropoff(addr); setActiveInput(null); }}
+                                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    <span className="text-sm font-medium text-white/90 truncate">{addr}</span>
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                         
                         {/* Swap Button */}
