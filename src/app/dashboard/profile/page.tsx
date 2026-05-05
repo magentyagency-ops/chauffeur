@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { getPersistedProfile, savePersistedProfile, type DriverProfile, getPersistedPhoto, savePersistedPhoto } from "@/lib/mockProfile";
 import { createClient } from "@/lib/supabase/client";
 import { updateDriverProfile } from "@/lib/actions/profile";
+import PushNotificationManager from "../PushNotificationManager";
 
 export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
@@ -316,6 +317,12 @@ export default function ProfilePage() {
               className="w-full bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[15px] font-medium text-black focus:outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none" 
             />
           </div>
+        </section>
+
+        {/* Configuration des Notifications */}
+        <section className="mt-12 pt-8 border-t border-gray-100">
+          <h3 className="font-display text-2xl font-[800] tracking-tight text-black mb-6">Paramètres système</h3>
+          <PushNotificationManager />
         </section>
       </main>
     </>

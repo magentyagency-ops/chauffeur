@@ -9,7 +9,6 @@ import { getPersistedProfile } from "@/lib/mockProfile";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import PushNotificationManager from "./PushNotificationManager";
 
 export default function DashboardContent({ user, profile: initialProfile }: { user: any; profile: any }) {
   const [availability, setAvailability] = useState(mockAvailability);
@@ -120,11 +119,6 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
         <section>
           <h2 className="text-4xl font-[800] tracking-tight mb-2 font-display text-black">Bonjour {firstName}</h2>
           <p className="text-gray-500 font-medium text-[16px]">Voici vos prochaines courses.</p>
-        </section>
-
-        {/* Push Notification Manager */}
-        <section>
-          <PushNotificationManager />
         </section>
 
         {/* Upcoming Bookings */}
