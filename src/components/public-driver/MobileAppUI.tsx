@@ -57,8 +57,6 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     
     if (result.success && result.booking?.id) {
       setActiveBookingId(result.booking.id);
-      if (result.booking.pickupAddress) setPickup(result.booking.pickupAddress);
-      if (result.booking.destinationAddress) setDropoff(result.booking.destinationAddress);
       setBookingStatus("pending");
     } else {
       alert(result.error || "Une erreur est survenue lors de la réservation.");
