@@ -18,18 +18,28 @@ export async function savePushSubscription(subscription: any) {
 
   if (!user) return { success: false, error: "Non authentifié" };
 
+  // Chercher le profil du chauffeur pour avoir le bon ID
+  const { data: profile } = await supabase
+    .from("driver_profiles")
+    .select("id")
+    .eq("id", user.id) // On essaye d'abord par ID direct
+    .single();
+
+  const driverId = profile?.id;
+  if (!driverId) return { success: false, error: "Profil chauffeur non trouvé" };
+
   // Vérifier si l'abonnement existe déjà pour éviter les doublons
   const { data: existing } = await supabase
     .from("push_subscriptions")
     .select("id")
-    .eq("driver_id", user.id)
+    .eq("driver_id", driverId)
     .eq("subscription_json->>endpoint", subscription.endpoint)
     .single();
 
   if (existing) return { success: true };
 
   const { error } = await supabase.from("push_subscriptions").insert({
-    driver_id: user.id,
+    driver_id: driverId,
     subscription_json: subscription
   });
 
