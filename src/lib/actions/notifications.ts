@@ -15,65 +15,82 @@ if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 export async function savePushSubscription(subscription: any) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) return { success: false, error: "Non authentifié" };
 
+  console.log("Saving push sub for user:", user.id);
+
   // Chercher le profil du chauffeur pour avoir le bon ID
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("driver_profiles")
     .select("id")
-    .eq("user_id", user.id) // Utilisation de user_id comme dans le dashboard
+    .eq("user_id", user.id)
     .single();
+
+  if (profileError) {
+    console.error("Profile error:", profileError);
+    return { success: false, error: "Profil chauffeur non trouvé: " + profileError.message };
+  }
 
   const driverId = profile?.id;
-  if (!driverId) return { success: false, error: "Profil chauffeur non trouvé" };
+  if (!driverId) return { success: false, error: "Profil chauffeur non trouvé (data vide)" };
 
-  // Vérifier si l'abonnement existe déjà pour éviter les doublons
-  const { data: existing } = await supabase
-    .from("push_subscriptions")
-    .select("id")
-    .eq("driver_id", driverId)
-    .eq("subscription_json->>endpoint", subscription.endpoint)
-    .single();
-
-  if (existing) return { success: true };
-
-  const { error } = await supabase.from("push_subscriptions").insert({
+  // Forcer l'insertion simple
+  const { error: insertError } = await supabase.from("push_subscriptions").insert({
     driver_id: driverId,
     subscription_json: subscription
   });
 
-  if (error) {
-    console.error("Error saving push subscription:", error);
-    return { success: false, error: error.message };
+  if (insertError) {
+    console.error("Insert error:", insertError);
+    return { success: false, error: "Erreur d'écriture : " + insertError.message };
   }
 
-  return { success: true };
+  // Envoyer une notification de test immédiate
+  setTimeout(() => {
+    sendPushNotification(driverId, {
+      title: "Notifications Activées ! ✅",
+      body: "Vous recevrez désormais vos alertes ici.",
+      url: "/dashboard"
+    }).catch(console.error);
+  }, 1000);
+
+  return { success: true, driverId };
 }
 
 export async function sendPushNotification(driverId: string, payload: { title: string; body: string; url?: string }) {
   const supabase = await createClient();
   
-  const { data: subscriptions } = await supabase
+  console.log("Attempting push to driver:", driverId);
+
+  const { data: subscriptions, error: subError } = await supabase
     .from("push_subscriptions")
     .select("subscription_json")
     .eq("driver_id", driverId);
 
-  if (!subscriptions || subscriptions.length === 0) return;
+  if (subError) {
+    console.error("Error fetching subscriptions:", subError);
+    return;
+  }
+
+  if (!subscriptions || subscriptions.length === 0) {
+    console.log("No subscriptions found for driver:", driverId);
+    return;
+  }
+
+  console.log(`Found ${subscriptions.length} subscriptions for driver.`);
 
   const results = await Promise.all(
-    subscriptions.map(async (sub) => {
+    subscriptions.map(async (sub, idx) => {
       try {
-        await webpush.sendNotification(
+        console.log(`Sending notification to subscription ${idx}...`);
+        const result = await webpush.sendNotification(
           sub.subscription_json as any,
           JSON.stringify(payload)
         );
-        return { success: true };
+        console.log(`Notification ${idx} sent successfully.`);
+        return { success: true, result };
       } catch (error: any) {
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          // L'abonnement a expiré ou est invalide, on pourrait le supprimer ici
-          console.log("Subscription expired, removing...");
-        }
+        console.error(`Error sending notification ${idx}:`, error);
         return { success: false, error };
       }
     })
