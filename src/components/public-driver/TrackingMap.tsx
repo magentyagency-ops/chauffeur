@@ -18,9 +18,16 @@ const pickupIcon = new L.DivIcon({
 });
 
 const carIcon = new L.DivIcon({
-  html: `<div style="background-color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,255,255,0.6);">
-           <div style="background-color: black; width: 8px; height: 8px; border-radius: 50%;"></div>
-         </div>`,
+  html: `<div style="background-color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,255,255,0.6); position: relative;">
+           <div style="background-color: black; width: 8px; height: 8px; border-radius: 50%; z-index: 2;"></div>
+           <div style="position: absolute; inset: -4px; border-radius: 50%; background-color: white; opacity: 0.3; animation: pulse 2s infinite;"></div>
+         </div>
+         <style>
+           @keyframes pulse {
+             0% { transform: scale(1); opacity: 0.5; }
+             100% { transform: scale(2.5); opacity: 0; }
+           }
+         </style>`,
   className: "",
   iconSize: [24, 24],
   iconAnchor: [12, 12],
