@@ -52,8 +52,15 @@ export default function TrackingMap({ pickupAddress }: TrackingMapProps) {
   useEffect(() => {
     async function geocode() {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pickupAddress)}`);
-        const data = await res.json();
+        let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pickupAddress)}&limit=1`);
+        let data = await res.json();
+        
+        // Retry with ", France" if not found
+        if (!data || data.length === 0) {
+          res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pickupAddress + ", France")}&limit=1`);
+          data = await res.json();
+        }
+
         if (data && data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
