@@ -50,6 +50,23 @@ export default function PushNotificationManager() {
     }
   }
 
+  async function unsubscribe() {
+    setLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
+      setIsSubscribed(false);
+      alert("Notifications désactivées. Vous pouvez maintenant essayer de les réactiver.");
+    } catch (e) {
+      console.error("Unsubscribe error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (!isSupported) return null;
 
   return (
@@ -57,17 +74,25 @@ export default function PushNotificationManager() {
       <div>
         <h3 className="font-bold text-white">Notifications Mobile</h3>
         <p className="text-xs text-gray-400">Recevez une alerte sonore à chaque nouvelle course.</p>
+        {isSubscribed && (
+          <button 
+            onClick={unsubscribe}
+            className="text-[10px] text-gray-500 underline mt-1 hover:text-white transition-colors"
+          >
+            Réinitialiser / Désactiver
+          </button>
+        )}
       </div>
       <button
         onClick={subscribeToPush}
-        disabled={isSubscribed || loading}
+        disabled={(isSubscribed && !loading) || loading}
         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-          isSubscribed 
+          isSubscribed && !loading
             ? "bg-green-500/10 text-green-500 border border-green-500/20 cursor-default" 
             : "bg-white text-black hover:scale-105"
         }`}
       >
-        {loading ? "Chargement..." : isSubscribed ? "Notifications Activées" : "Activer"}
+        {loading ? "Chargement..." : isSubscribed ? "Activées" : "Activer"}
       </button>
     </div>
   );
