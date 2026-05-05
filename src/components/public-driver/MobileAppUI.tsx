@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function MobileAppUI({ driver }: { driver: any }) {
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
+  const [clientName, setClientName] = useState("");
   const [timing, setTiming] = useState<"now" | "later">("now");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [date, setDate] = useState("");
@@ -26,13 +27,14 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const whiteBtn = "bg-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"; 
 
   const handleSubmit = async () => {
+    if (!clientName.trim()) return alert("Veuillez indiquer votre nom pour le chauffeur.");
     if (timing === "later" && (!date || !time)) return alert("Veuillez indiquer la date et l'heure");
     if (!pickup || !dropoff) return alert("Veuillez indiquer le départ et l'arrivée");
     
     setSending(true);
     const result = await createBooking({
       driverSlug: driver.slug,
-      clientName: "Client Privé",
+      clientName: clientName.trim(),
       clientPhone: "0600000000",
       clientEmail: "client@example.com",
       pickupAddress: pickup,
@@ -187,6 +189,20 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                     </div>
                   ) : (
                     <div className="relative flex flex-col gap-2 pt-3">
+                      {/* Name */}
+                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4 mb-2`}>
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="Votre nom" 
+                          value={clientName}
+                          onChange={e => setClientName(e.target.value)}
+                          className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                        />
+                      </div>
+
                       {/* Pickup */}
                       <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
                         <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
@@ -261,7 +277,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                       
                       {/* Swap Button */}
                       <button 
-                        className={`absolute top-[4.5rem] left-8 -translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(20,20,20,1)] border-4 border-[#09090B] flex items-center justify-center z-10 hover:brightness-125 transition-all`}
+                        className={`absolute top-[8.5rem] left-8 -translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(20,20,20,1)] border-4 border-[#09090B] flex items-center justify-center z-10 hover:brightness-125 transition-all`}
                         onClick={() => {
                           const temp = pickup;
                           setPickup(dropoff);
