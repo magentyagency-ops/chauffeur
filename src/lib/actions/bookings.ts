@@ -29,6 +29,48 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   accepted: ["completed", "cancelled"],
 };
 
+// ─── OpenAI Address Refinement Helper ─────────────────────────────────────
+async function refineAddresses(pickup: string, dropoff: string, driverCity: string): Promise<{pickup: string, dropoff: string}> {
+  if (!process.env.OPENAI_API_KEY) return { pickup, dropoff };
+  
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Tu es un assistant GPS intelligent pour un chauffeur privé. Corrige, précise et formate de manière professionnelle les adresses fournies. S'il y a un lieu implicite (ex: "le 33", "gare"), trouve l'adresse complète. Le chauffeur travaille près de : ${driverCity}. Renvoie un JSON strict avec les clés "pickup" et "dropoff" contenant les adresses complètes formatées prêtes pour un GPS.`
+          },
+          {
+            role: "user",
+            content: JSON.stringify({ pickup, dropoff })
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+      })
+    });
+    
+    const data = await res.json();
+    if (data.choices && data.choices[0].message.content) {
+      const parsed = JSON.parse(data.choices[0].message.content);
+      return {
+        pickup: parsed.pickup || pickup,
+        dropoff: parsed.dropoff || dropoff
+      };
+    }
+  } catch (err) {
+    console.error("OpenAI address parsing error:", err);
+  }
+  return { pickup, dropoff };
+}
+
 // ─── createBooking ──────────────────────────────────────────────────────
 export async function createBooking(input: CreateBookingInput): Promise<BookingResult> {
   try {
@@ -51,7 +93,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     // Find driver by slug
     const { data: driver, error: driverErr } = await supabase
       .from("driver_profiles")
-      .select("id, user_id, full_name, public_slug, is_available")
+      .select("id, user_id, full_name, public_slug, is_available, city")
       .eq("public_slug", input.driverSlug)
       .single();
 
@@ -64,14 +106,17 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       return { success: false, error: "Ce chauffeur n'est plus disponible pour une course immédiate. Vous pouvez réserver pour plus tard.", errorCode: "DRIVER_UNAVAILABLE" };
     }
 
+    // Refine addresses using OpenAI for GPS mapping precision
+    const refinedAddresses = await refineAddresses(input.pickupAddress.trim(), input.destinationAddress.trim(), driver.city);
+
     // Execute the secure RPC function to bypass RLS for creating clients and bookings
     const { data: result, error: rpcError } = await supabase.rpc("submit_booking", {
       p_driver_id: driver.id,
       p_client_name: input.clientName.trim(),
       p_client_phone: input.clientPhone.trim(),
       p_client_email: input.clientEmail?.trim() || null,
-      p_pickup_address: input.pickupAddress.trim(),
-      p_destination_address: input.destinationAddress.trim(),
+      p_pickup_address: refinedAddresses.pickup,
+      p_destination_address: refinedAddresses.dropoff,
       p_booking_type: input.bookingType,
       p_scheduled_at: input.bookingType === "later" ? input.scheduledAt : new Date().toISOString(),
       p_notes: input.notes?.trim() || null,
@@ -84,7 +129,14 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
 
     // Return immediately to make the client UI ultra-fast.
     // Dashboard handles updates via Realtime/Polling.
-    return { success: true, booking: { id: result.booking_id } };
+    return { 
+      success: true, 
+      booking: { 
+        id: result.booking_id,
+        pickupAddress: refinedAddresses.pickup,
+        destinationAddress: refinedAddresses.dropoff
+      } 
+    };
   } catch (e) {
     console.error("createBooking error:", e);
     return { success: false, error: "Une erreur est survenue.", errorCode: "NETWORK_ERROR" };
