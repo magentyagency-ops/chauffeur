@@ -434,7 +434,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                             </svg>
                           </div>
                         </div>
-                        <h3 className="text-xl font-[800] mb-2">Recherche en cours...</h3>
+                        <h3 className="text-xl font-[800] mb-2">{driver.publicName} traite votre demande</h3>
                         <p className="text-gray-400 text-sm leading-relaxed max-w-[240px]">
                           Demande envoyée à <span className="text-white font-bold">{driver.publicName}</span>.
                         </p>
