@@ -4,6 +4,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createBooking } from "@/lib/actions/bookings";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import dynamic from "next/dynamic";
+
+const DynamicTrackingMap = dynamic(() => import("./TrackingMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-[#0a0a0a] animate-pulse flex items-center justify-center">
+      <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Chargement du GPS...</p>
+    </div>
+  )
+});
 
 export default function MobileAppUI({ driver }: { driver: any }) {
   const [pickup, setPickup] = useState("");
@@ -108,18 +118,24 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   return (
     <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-white selection:text-black relative flex flex-col">
       
-      {/* 1. HERO IMAGE BACKGROUND */}
-      <div className="absolute top-0 left-0 w-full h-[65vh] z-0 overflow-hidden">
-        <img 
-          src={photoSrc} 
-          alt={driver.publicName} 
-          className="w-full h-full object-cover" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black" />
+      {/* 1. HERO IMAGE OR MAP BACKGROUND */}
+      <div className={`absolute top-0 left-0 w-full z-0 overflow-hidden transition-all duration-1000 ${bookingStatus === "accepted" ? "h-[100dvh]" : "h-[65vh]"}`}>
+        {bookingStatus === "accepted" ? (
+          <DynamicTrackingMap pickupAddress={pickup} />
+        ) : (
+          <>
+            <img 
+              src={photoSrc} 
+              alt={driver.publicName} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black" />
+          </>
+        )}
       </div>
 
       {/* Container simulating mobile constraints but centered on desktop */}
-      <div className="max-w-md mx-auto min-h-[100dvh] relative z-10 flex flex-col p-5 w-full">
+      <div className={`max-w-md mx-auto min-h-[100dvh] relative z-10 flex flex-col p-5 w-full ${bookingStatus === "accepted" ? "justify-end pointer-events-none" : ""}`}>
         
         {/* CONTENU PRINCIPAL POUSSÉ VERS LE BAS */}
         <div className="flex-1 flex flex-col justify-end pb-12 sm:pb-24">
@@ -140,231 +156,246 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           )}
           
           {/* FORMULAIRE (FLOATING CARD) OU STATUT */}
-          <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}>
-            <AnimatePresence mode="wait">
-              {!activeBookingId ? (
-                <motion.div 
-                  key="form"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="relative flex flex-col gap-2 pt-3"
-                >
-                  {/* Top Notch for Timing */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-0.5 flex items-center gap-1 z-20">
-                    <button 
-                      onClick={() => { if (driver.isAvailable) { setTiming("now"); setShowDatePicker(false); } }}
-                      disabled={!driver.isAvailable}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "now" && !showDatePicker ? "bg-white text-black" : "text-gray-400"} ${!driver.isAvailable ? "opacity-50 cursor-not-allowed" : "hover:text-white"}`}
-                    >
-                      Immédiat
-                    </button>
-                    <button 
-                      onClick={() => { setTiming("later"); setShowDatePicker(true); }}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "later" || showDatePicker ? "bg-white text-black" : "text-gray-400 hover:text-white"}`}
-                    >
-                      Plus tard
-                    </button>
-                  </div>
-
-                  {/* Date/Time Picker Modal (Si affiché) */}
-                  {showDatePicker ? (
-                    <div className="p-4 space-y-4">
-                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <input 
-                          type="date" 
-                          value={date}
-                          onChange={e => setDate(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white w-full font-medium [color-scheme:dark]"
-                        />
-                      </div>
-                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <input 
-                          type="time" 
-                          value={time}
-                          onChange={e => setTime(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white w-full font-medium [color-scheme:dark]"
-                        />
-                      </div>
+          {bookingStatus !== "accepted" ? (
+            <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}>
+              <AnimatePresence mode="wait">
+                {!activeBookingId ? (
+                  <motion.div 
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="relative flex flex-col gap-2 pt-3"
+                  >
+                    {/* Top Notch for Timing */}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-0.5 flex items-center gap-1 z-20">
                       <button 
-                        onClick={() => setShowDatePicker(false)}
-                        className={`w-full py-4 mt-2 rounded-full font-bold text-black transition-colors ${date && time ? "bg-white" : "bg-gray-600"} `}
-                        disabled={!date || !time}
+                        onClick={() => { if (driver.isAvailable) { setTiming("now"); setShowDatePicker(false); } }}
+                        disabled={!driver.isAvailable}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "now" && !showDatePicker ? "bg-white text-black" : "text-gray-400"} ${!driver.isAvailable ? "opacity-50 cursor-not-allowed" : "hover:text-white"}`}
                       >
-                        Valider l'horaire
+                        Immédiat
+                      </button>
+                      <button 
+                        onClick={() => { setTiming("later"); setShowDatePicker(true); }}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "later" || showDatePicker ? "bg-white text-black" : "text-gray-400 hover:text-white"}`}
+                      >
+                        Plus tard
                       </button>
                     </div>
-                  ) : (
-                    <div className="relative flex flex-col gap-2 pt-3">
-                      {/* Name */}
-                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4 mb-2`}>
-                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </div>
-                        <input 
-                          type="text" 
-                          placeholder="Votre nom" 
-                          value={clientName}
-                          onChange={e => setClientName(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
-                        />
-                      </div>
 
-                      {/* Pickup */}
-                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                        <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
-                          <div className="w-2 h-2 bg-black rounded-full"></div>
+                    {/* Date/Time Picker Modal (Si affiché) */}
+                    {showDatePicker ? (
+                      <div className="p-4 space-y-4">
+                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                          <input 
+                            type="date" 
+                            value={date}
+                            onChange={e => setDate(e.target.value)}
+                            className="bg-transparent border-none outline-none text-white w-full font-medium [color-scheme:dark]"
+                          />
                         </div>
-                        <input 
-                          type="text" 
-                          placeholder="Lieu de départ" 
-                          value={pickup}
-                          onChange={e => setPickup(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
-                        />
+                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <input 
+                            type="time" 
+                            value={time}
+                            onChange={e => setTime(e.target.value)}
+                            className="bg-transparent border-none outline-none text-white w-full font-medium [color-scheme:dark]"
+                          />
+                        </div>
                         <button 
-                          onClick={() => {
-                            if ("geolocation" in navigator) {
-                              navigator.geolocation.getCurrentPosition(
-                                async (pos) => {
-                                  setPickup("Recherche...");
-                                  const lat = pos.coords.latitude;
-                                  const lon = pos.coords.longitude;
-                                  try {
-                                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                                    const data = await res.json();
-                                    if (data && data.address) {
-                                      const { house_number, road, city, town, village } = data.address;
-                                      const street = [house_number, road].filter(Boolean).join(" ");
-                                      const locality = city || town || village || "";
-                                      const shortAddress = [street, locality].filter(Boolean).join(", ");
-                                      setPickup(shortAddress || data.display_name);
-                                    } else if (data && data.display_name) {
-                                      setPickup(data.display_name);
-                                    } else {
+                          onClick={() => setShowDatePicker(false)}
+                          className={`w-full py-4 mt-2 rounded-full font-bold text-black transition-colors ${date && time ? "bg-white" : "bg-gray-600"} `}
+                          disabled={!date || !time}
+                        >
+                          Valider l'horaire
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative flex flex-col gap-2 pt-3">
+                        {/* Name */}
+                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4 mb-2`}>
+                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          </div>
+                          <input 
+                            type="text" 
+                            placeholder="Votre nom" 
+                            value={clientName}
+                            onChange={e => setClientName(e.target.value)}
+                            className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                          />
+                        </div>
+
+                        {/* Pickup */}
+                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
+                            <div className="w-2 h-2 bg-black rounded-full"></div>
+                          </div>
+                          <input 
+                            type="text" 
+                            placeholder="Lieu de départ" 
+                            value={pickup}
+                            onChange={e => setPickup(e.target.value)}
+                            className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                          />
+                          <button 
+                            onClick={() => {
+                              if ("geolocation" in navigator) {
+                                navigator.geolocation.getCurrentPosition(
+                                  async (pos) => {
+                                    setPickup("Recherche...");
+                                    const lat = pos.coords.latitude;
+                                    const lon = pos.coords.longitude;
+                                    try {
+                                      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                                      const data = await res.json();
+                                      if (data && data.address) {
+                                        const { house_number, road, city, town, village } = data.address;
+                                        const street = [house_number, road].filter(Boolean).join(" ");
+                                        const locality = city || town || village || "";
+                                        const shortAddress = [street, locality].filter(Boolean).join(", ");
+                                        setPickup(shortAddress || data.display_name);
+                                      } else if (data && data.display_name) {
+                                        setPickup(data.display_name);
+                                      } else {
+                                        setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+                                      }
+                                    } catch (err) {
                                       setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
                                     }
-                                  } catch (err) {
-                                    setPickup(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
-                                  }
-                                },
-                                (error) => { 
-                                  setPickup(""); 
-                                  if (error.code === 1) {
-                                    alert("La géolocalisation est bloquée. Veuillez l'autoriser dans les réglages de votre navigateur.");
-                                  } else {
-                                    alert("Impossible de vous localiser.");
-                                  }
-                                },
-                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-                              );
-                            }
+                                  },
+                                  (error) => { 
+                                    setPickup(""); 
+                                    if (error.code === 1) {
+                                      alert("La géolocalisation est bloquée. Veuillez l'autoriser dans les réglages de votre navigateur.");
+                                    } else {
+                                      alert("Impossible de vous localiser.");
+                                    }
+                                  },
+                                  { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                                );
+                              }
+                            }}
+                            className="p-1 text-white hover:bg-white/10 rounded-full transition-colors"
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Dropoff */}
+                        <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
+                          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
+                            <div className="w-2 h-2 bg-black rounded-full"></div>
+                          </div>
+                          <input 
+                            type="text" 
+                            placeholder="Votre destination" 
+                            value={dropoff}
+                            onChange={e => setDropoff(e.target.value)}
+                            className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
+                          />
+                        </div>
+                        
+                        {/* Swap Button */}
+                        <button 
+                          className={`absolute top-[8.5rem] left-8 -translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(20,20,20,1)] border-4 border-[#09090B] flex items-center justify-center z-10 hover:brightness-125 transition-all`}
+                          onClick={() => {
+                            const temp = pickup;
+                            setPickup(dropoff);
+                            setDropoff(temp);
                           }}
-                          className="p-1 text-white hover:bg-white/10 rounded-full transition-colors"
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="m17 2 4 4-4 4"></path>
+                            <path d="M3 11v-1a4 4 0 0 1 4-4h14"></path>
+                            <path d="m7 22-4-4 4-4"></path>
+                            <path d="M21 13v1a4 4 0 0 1-4 4H3"></path>
                           </svg>
                         </button>
                       </div>
-
-                      {/* Dropoff */}
-                      <div className={`flex items-center gap-3 ${inputBg} rounded-full px-5 py-4`}>
-                        <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0">
-                          <div className="w-2 h-2 bg-black rounded-full"></div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="status-pending"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center py-6 px-4 text-center overflow-hidden rounded-[2rem]"
+                  >
+                    {bookingStatus === "pending" ? (
+                      <>
+                        <div className="relative w-20 h-20 mb-6">
+                          <motion.div 
+                            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="absolute inset-0 bg-white rounded-full"
+                          />
+                          <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
+                              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                            </svg>
+                          </div>
                         </div>
-                        <input 
-                          type="text" 
-                          placeholder="Votre destination" 
-                          value={dropoff}
-                          onChange={e => setDropoff(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
-                        />
-                      </div>
-                      
-                      {/* Swap Button */}
-                      <button 
-                        className={`absolute top-[8.5rem] left-8 -translate-y-1/2 w-8 h-8 rounded-full bg-[rgba(20,20,20,1)] border-4 border-[#09090B] flex items-center justify-center z-10 hover:brightness-125 transition-all`}
-                        onClick={() => {
-                          const temp = pickup;
-                          setPickup(dropoff);
-                          setDropoff(temp);
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="m17 2 4 4-4 4"></path>
-                          <path d="M3 11v-1a4 4 0 0 1 4-4h14"></path>
-                          <path d="m7 22-4-4 4-4"></path>
-                          <path d="M21 13v1a4 4 0 0 1-4 4H3"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="status"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center py-6 px-4 text-center overflow-hidden rounded-[2rem]"
-                >
-                  {bookingStatus === "pending" ? (
-                    <>
-                      <div className="relative w-20 h-20 mb-6">
-                        <motion.div 
-                          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                          transition={{ repeat: Infinity, duration: 2 }}
-                          className="absolute inset-0 bg-white rounded-full"
-                        />
-                        <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
-                            <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
-                          </svg>
+                        <h3 className="text-xl font-[800] mb-2">Recherche en cours...</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed max-w-[240px]">
+                          Demande envoyée à <span className="text-white font-bold">{driver.publicName}</span>.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="m18 6-12 12M6 6l12 12"/></svg>
                         </div>
-                      </div>
-                      <h3 className="text-xl font-[800] mb-2">Recherche en cours...</h3>
-                      <p className="text-gray-400 text-sm leading-relaxed max-w-[240px]">
-                        Demande envoyée à <span className="text-white font-bold">{driver.publicName}</span>.
-                      </p>
-                    </>
-                  ) : bookingStatus === "accepted" ? (
-                    <>
-                      <motion.div 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
-                      >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="4">
-                          <path d="M20 6 9 17l-5-5"></path>
-                        </svg>
-                      </motion.div>
-                      <h3 className="text-2xl font-[900] text-white mb-2">Course Acceptée !</h3>
-                      <p className="text-white/80 font-medium mb-1">{driver.publicName} est en route.</p>
-                      <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mt-4">
-                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                        <span className="text-sm font-bold">Arrivée estimée : 5-10 min</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="m18 6-12 12M6 6l12 12"/></svg>
-                      </div>
-                      <h3 className="text-lg font-bold mb-1">Statut : {bookingStatus}</h3>
-                      <button 
-                        onClick={() => setActiveBookingId(null)}
-                        className="text-xs text-gray-400 underline mt-2"
-                      >
-                        Retour
-                      </button>
-                    </>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                        <h3 className="text-lg font-bold mb-1">Statut : {bookingStatus}</h3>
+                        <button 
+                          onClick={() => setActiveBookingId(null)}
+                          className="text-xs text-gray-400 underline mt-2"
+                        >
+                          Retour
+                        </button>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full bg-[#111] backdrop-blur-2xl rounded-[2rem] p-6 pb-8 border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto mt-auto mb-[-20px]"
+            >
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6" />
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-3xl font-[900] text-white tracking-tight mb-1">En route</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <p className="text-white/80 font-bold text-sm">Arrivée estimée : ~5 min</p>
+                  </div>
+                </div>
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 shrink-0">
+                   <img src={driver.profilePhotoUrl} alt={driver.publicName} className="w-full h-full object-cover" />
+                </div>
+              </div>
+              
+              <div className="bg-white/5 rounded-2xl p-4 flex items-center justify-between border border-white/5 shadow-inner">
+                 <div>
+                   <p className="font-[800] text-white text-lg">{driver.publicName}</p>
+                   <p className="text-sm text-gray-400 font-medium">{driver.vehicle.model}</p>
+                 </div>
+                 <div className="bg-white text-black font-[900] px-3 py-1.5 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                   4.9 ★
+                 </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* CTA BOUTON - HIDDEN IF ACTIVE BOOKING */}
           {!activeBookingId && (
