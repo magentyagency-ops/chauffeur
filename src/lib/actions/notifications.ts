@@ -22,7 +22,7 @@ export async function savePushSubscription(subscription: any) {
   const { data: profile } = await supabase
     .from("driver_profiles")
     .select("id")
-    .eq("id", user.id) // On essaye d'abord par ID direct
+    .eq("user_id", user.id) // Utilisation de user_id comme dans le dashboard
     .single();
 
   const driverId = profile?.id;
