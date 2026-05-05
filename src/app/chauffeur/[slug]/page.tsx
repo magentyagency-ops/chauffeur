@@ -2,6 +2,36 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { mockPublicDriver } from "@/lib/mockPublicDriver";
 import MobileAppUI from "@/components/public-driver/MobileAppUI";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: dbProfile } = await supabase
+    .from("driver_profiles")
+    .select("full_name, profile_photo_url, city")
+    .eq("public_slug", slug)
+    .single();
+
+  if (!dbProfile) return { title: "Chauffeur introuvable" };
+
+  const name = dbProfile.full_name;
+  const photo = dbProfile.profile_photo_url || "/favicon.ico";
+
+  return {
+    title: `${name} — Votre Chauffeur Privé à ${dbProfile.city}`,
+    description: `Réservez votre trajet avec ${name}, chauffeur privé professionnel à ${dbProfile.city}.`,
+    icons: {
+      icon: photo,
+      apple: photo,
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: name,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
