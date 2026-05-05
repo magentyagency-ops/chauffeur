@@ -163,11 +163,11 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
                         </div>
                       </div>
                     </div>
-                    {b.estimated_price && (
-                      <div className="font-[800] text-[18px] text-black hidden sm:block bg-gray-50 px-4 py-2 rounded-xl shadow-inner border border-gray-100">
-                        {b.estimated_price}€
-                      </div>
-                    )}
+                    
+                    <Link href="/dashboard/bookings" className="bg-black shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:-translate-y-1 rounded-full transition-all font-[900] px-6 py-2 text-[14px] text-white uppercase tracking-wider shrink-0">
+                      GO
+                    </Link>
+
                   </div>
                 );
               })
