@@ -42,9 +42,9 @@ export default function PushNotificationManager() {
       } else {
         alert("Erreur lors de l'activation : " + result.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to subscribe to push:", error);
-      alert("Impossible d'activer les notifications sur cet appareil.");
+      alert("Erreur détaillée : " + (error.message || JSON.stringify(error)));
     } finally {
       setLoading(false);
     }
