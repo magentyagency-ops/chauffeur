@@ -47,7 +47,7 @@ export default function TrackingMap({ pickupAddress, dropoffAddress }: TrackingM
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
   const [dropoffCoords, setDropoffCoords] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<[number, number][]>([]);
-  const [currentPosIndex, setCurrentPosIndex] = useState(0);
+  const [currentPos, setCurrentPos] = useState<[number, number] | null>(null);
 
   // Helper function to geocode an address
   const geocodeAddress = async (address: string): Promise<[number, number]> => {
@@ -107,6 +107,7 @@ export default function TrackingMap({ pickupAddress, dropoffAddress }: TrackingM
           // GeoJSON coordinates are [lng, lat], react-leaflet wants [lat, lng]
           const coordinates = data.routes[0].geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
           setRoute(coordinates);
+          setCurrentPos(coordinates[0]); // Start position
         }
       } catch (err) {
         console.error("OSRM error:", err);
@@ -115,21 +116,58 @@ export default function TrackingMap({ pickupAddress, dropoffAddress }: TrackingM
     getRoute();
   }, [pickupCoords, dropoffCoords]);
 
-  // 3. Animate car along the route
+  // 3. Smooth 60fps Animation along the route
   useEffect(() => {
-    if (route.length === 0) return;
+    if (route.length < 2) return;
     
-    const interval = setInterval(() => {
-      setCurrentPosIndex((prev) => {
-        if (prev >= route.length - 1) {
-          clearInterval(interval);
-          return prev;
+    let totalDistance = 0;
+    const distances: number[] = [];
+    
+    // Pre-calculate segments to normalize speed
+    for (let i = 0; i < route.length - 1; i++) {
+      const p1 = route[i];
+      const p2 = route[i+1];
+      // Pythagoras for simple local distance estimation
+      const d = Math.sqrt(Math.pow(p2[0]-p1[0], 2) + Math.pow(p2[1]-p1[1], 2));
+      distances.push(d);
+      totalDistance += d;
+    }
+
+    let startTime: number | null = null;
+    // Dynamic duration based on distance, clamped between 10s and 30s
+    const dynamicDuration = Math.max(10000, Math.min(30000, totalDistance * 100000));
+    let animationFrameId: number;
+
+    const animate = (time: number) => {
+      if (!startTime) startTime = time;
+      const elapsed = time - startTime;
+      
+      // The progress resets to 0 when reaching 1, creating a loop
+      const progress = (elapsed % dynamicDuration) / dynamicDuration; 
+      const targetDistance = progress * totalDistance;
+
+      let currentDist = 0;
+      for (let i = 0; i < route.length - 1; i++) {
+        const d = distances[i];
+        if (currentDist + d >= targetDistance) {
+          // We are in this segment, interpolate precisely
+          const segmentProgress = d === 0 ? 0 : (targetDistance - currentDist) / d;
+          const p1 = route[i];
+          const p2 = route[i+1];
+          const lat = p1[0] + (p2[0] - p1[0]) * segmentProgress;
+          const lng = p1[1] + (p2[1] - p1[1]) * segmentProgress;
+          
+          setCurrentPos([lat, lng]);
+          break;
         }
-        return prev + 1;
-      });
-    }, 1000); // 1 point per second
-    
-    return () => clearInterval(interval);
+        currentDist += d;
+      }
+      
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [route]);
 
   if (!pickupCoords || !dropoffCoords) {
@@ -161,7 +199,7 @@ export default function TrackingMap({ pickupAddress, dropoffAddress }: TrackingM
             <MapBounds route={route} />
             
             {/* Animated Car Marker */}
-            <Marker position={route[currentPosIndex]} icon={carIcon} />
+            <Marker position={currentPos || route[0]} icon={carIcon} />
           </>
         )}
 
