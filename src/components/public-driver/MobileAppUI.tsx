@@ -121,7 +121,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
       {/* 1. HERO IMAGE OR MAP BACKGROUND */}
       <div className={`absolute top-0 left-0 w-full z-0 overflow-hidden transition-all duration-1000 ${bookingStatus === "accepted" ? "h-[100dvh]" : "h-[65vh]"}`}>
         {bookingStatus === "accepted" ? (
-          <DynamicTrackingMap pickupAddress={pickup} />
+          <DynamicTrackingMap pickupAddress={pickup} dropoffAddress={dropoff} />
         ) : (
           <>
             <img 

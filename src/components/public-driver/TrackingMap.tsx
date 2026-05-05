@@ -28,6 +28,7 @@ const carIcon = new L.DivIcon({
 
 interface TrackingMapProps {
   pickupAddress: string;
+  dropoffAddress: string;
 }
 
 // Component to auto-fit map to route bounds
@@ -42,55 +43,63 @@ function MapBounds({ route }: { route: [number, number][] }) {
   return null;
 }
 
-export default function TrackingMap({ pickupAddress }: TrackingMapProps) {
+export default function TrackingMap({ pickupAddress, dropoffAddress }: TrackingMapProps) {
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
-  const [driverCoords, setDriverCoords] = useState<[number, number] | null>(null);
+  const [dropoffCoords, setDropoffCoords] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<[number, number][]>([]);
   const [currentPosIndex, setCurrentPosIndex] = useState(0);
 
-  // 1. Geocode the pickup address
-  useEffect(() => {
-    async function geocode() {
-      try {
-        let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pickupAddress)}&limit=1`);
-        let data = await res.json();
-        
-        // Retry with ", France" if not found
-        if (!data || data.length === 0) {
-          res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pickupAddress + ", France")}&limit=1`);
-          data = await res.json();
-        }
+  // Helper function to geocode an address
+  const geocodeAddress = async (address: string): Promise<[number, number]> => {
+    let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+    let data = await res.json();
+    
+    // Retry with ", France" if not found
+    if (!data || data.length === 0) {
+      res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ", France")}&limit=1`);
+      data = await res.json();
+    }
 
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          setPickupCoords([lat, lon]);
-          
-          // Mock driver location (about 1-2km away diagonally)
-          setDriverCoords([lat - 0.015, lon - 0.015]);
+    if (data && data.length > 0) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+    throw new Error(`Address not found: ${address}`);
+  };
+
+  // 1. Geocode BOTH pickup and dropoff
+  useEffect(() => {
+    async function geocodeBoth() {
+      try {
+        const pCoords = await geocodeAddress(pickupAddress);
+        setPickupCoords(pCoords);
+
+        if (dropoffAddress) {
+          const dCoords = await geocodeAddress(dropoffAddress);
+          setDropoffCoords(dCoords);
         } else {
-          throw new Error("Address not found");
+          // If no dropoff, mock one 2km away for demo purposes
+          setDropoffCoords([pCoords[0] + 0.02, pCoords[1] + 0.02]);
         }
       } catch (err) {
         console.error("Geocoding error:", err);
-        // Fallback to Paris center if geocoding fails completely
+        // Fallback to Paris center -> Charles de Gaulle if all fails
         setPickupCoords([48.8566, 2.3522]);
-        setDriverCoords([48.8466, 2.3422]);
+        setDropoffCoords([49.0097, 2.5479]);
       }
     }
     if (pickupAddress) {
-      geocode();
+      geocodeBoth();
     }
-  }, [pickupAddress]);
+  }, [pickupAddress, dropoffAddress]);
 
-  // 2. Fetch OSRM route between driver and pickup
+  // 2. Fetch OSRM route between pickup and dropoff
   useEffect(() => {
-    if (!pickupCoords || !driverCoords) return;
+    if (!pickupCoords || !dropoffCoords) return;
     
     async function getRoute() {
       try {
         // OSRM format is lng,lat
-        const url = `https://router.project-osrm.org/route/v1/driving/${driverCoords![1]},${driverCoords![0]};${pickupCoords![1]},${pickupCoords![0]}?geometries=geojson`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickupCoords![1]},${pickupCoords![0]};${dropoffCoords![1]},${dropoffCoords![0]}?geometries=geojson`;
         const res = await fetch(url);
         const data = await res.json();
         
@@ -104,7 +113,7 @@ export default function TrackingMap({ pickupAddress }: TrackingMapProps) {
       }
     }
     getRoute();
-  }, [pickupCoords, driverCoords]);
+  }, [pickupCoords, dropoffCoords]);
 
   // 3. Animate car along the route
   useEffect(() => {
@@ -123,10 +132,10 @@ export default function TrackingMap({ pickupAddress }: TrackingMapProps) {
     return () => clearInterval(interval);
   }, [route]);
 
-  if (!pickupCoords) {
+  if (!pickupCoords || !dropoffCoords) {
     return (
       <div className="w-full h-full bg-[#111] animate-pulse flex items-center justify-center">
-        <p className="text-gray-500 font-bold tracking-widest uppercase text-sm">Chargement du GPS...</p>
+        <p className="text-gray-500 font-bold tracking-widest uppercase text-sm">Calcul de l'itinéraire...</p>
       </div>
     );
   }
@@ -158,9 +167,15 @@ export default function TrackingMap({ pickupAddress }: TrackingMapProps) {
 
         {/* Pickup Location Marker */}
         <Marker position={pickupCoords} icon={pickupIcon} />
+        
+        {/* Dropoff Location Marker (Red dot to distinguish) */}
+        <Marker position={dropoffCoords} icon={new L.DivIcon({
+          html: `<div style="background-color: white; width: 16px; height: 16px; border-radius: 50%; border: 3px solid #ff3333; box-shadow: 0 0 10px rgba(255,51,51,0.5);"></div>`,
+          className: "", iconSize: [16, 16], iconAnchor: [8, 8]
+        })} />
       </MapContainer>
       
-      {/* Vignette effect overlay to blend map edges into darkness for a premium look */}
+      {/* Vignette effect overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black via-transparent to-black/40 z-[400]" />
     </div>
   );
