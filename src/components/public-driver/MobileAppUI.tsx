@@ -9,8 +9,8 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [clientName, setClientName] = useState("");
-  const [timing, setTiming] = useState<"now" | "later">("now");
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [timing, setTiming] = useState<"now" | "later">(driver.isAvailable ? "now" : "later");
+  const [showDatePicker, setShowDatePicker] = useState(!driver.isAvailable);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [sending, setSending] = useState(false);
@@ -126,9 +126,17 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           
           {/* TEXTE PRINCIPAL (Hidden if booking active) */}
           {!activeBookingId && (
-            <h1 className="text-5xl font-[800] tracking-tight mb-8 leading-[1.1] font-display">
-              Où souhaitez-<br/>vous aller ?
-            </h1>
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 mb-4">
+                <span className={`w-2 h-2 rounded-full ${driver.isAvailable ? "bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "bg-gray-500"}`}></span>
+                <span className="text-sm font-bold text-white/90">
+                  {driver.isAvailable ? "Disponible immédiatement" : "Sur réservation"}
+                </span>
+              </div>
+              <h1 className="text-5xl font-[800] tracking-tight leading-[1.1] font-display">
+                Où souhaitez-<br/>vous aller ?
+              </h1>
+            </div>
           )}
           
           {/* FORMULAIRE (FLOATING CARD) OU STATUT */}
@@ -145,8 +153,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                   {/* Top Notch for Timing */}
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md shadow-inner border border-white/10 rounded-full px-1 py-0.5 flex items-center gap-1 z-20">
                     <button 
-                      onClick={() => { setTiming("now"); setShowDatePicker(false); }}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "now" && !showDatePicker ? "bg-white text-black" : "text-gray-400 hover:text-white"}`}
+                      onClick={() => { if (driver.isAvailable) { setTiming("now"); setShowDatePicker(false); } }}
+                      disabled={!driver.isAvailable}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${timing === "now" && !showDatePicker ? "bg-white text-black" : "text-gray-400"} ${!driver.isAvailable ? "opacity-50 cursor-not-allowed" : "hover:text-white"}`}
                     >
                       Immédiat
                     </button>
