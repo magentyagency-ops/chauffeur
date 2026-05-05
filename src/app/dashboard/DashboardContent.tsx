@@ -195,7 +195,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
               else enableAvailability();
             }}
             className={`relative w-12 h-6 rounded-full transition-all duration-300 shadow-inner ${
-              isActive ? "bg-[#34D399]" : "bg-gray-200"
+              isActive ? "bg-black" : "bg-gray-200"
             }`}
           >
             <div
@@ -247,7 +247,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
                         <div className="flex items-center gap-3 mb-1">
                           <span className="font-[800] text-[16px] text-black">{b.client_name}</span>
                           <span className={`text-[10px] px-2 py-1 rounded-full font-[800] uppercase tracking-wider ${
-                            b.status === 'accepted' ? 'bg-[#34D399]/10 text-[#059669]' : 'bg-orange-500/10 text-orange-600'
+                            b.status === 'accepted' ? 'bg-black text-white' : 'bg-orange-500/10 text-orange-600'
                           }`}>
                             {b.status === 'accepted' ? 'Confirmé' : 'Attente'}
                           </span>
@@ -290,13 +290,13 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
               <div className="bg-black text-white p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
                 <div className="relative z-20">
-                  <div className="w-20 h-20 bg-[#34D399] rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse shadow-[0_0_30px_rgba(52,211,153,0.5)]">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse shadow-[0_0_30px_rgba(255,255,255,0.5)]">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                     </svg>
                   </div>
                   <h2 className="text-3xl font-[900] tracking-tight font-display text-white">Nouvelle Demande</h2>
-                  <p className="text-[#34D399] mt-2 font-bold text-lg uppercase tracking-widest">{incomingBooking.booking_type === "now" ? "Départ Immédiat" : "Réservation Programmée"}</p>
+                  <p className="text-white mt-2 font-bold text-lg uppercase tracking-widest">{incomingBooking.booking_type === "now" ? "Départ Immédiat" : "Réservation Programmée"}</p>
                 </div>
               </div>
               <div className="p-8 space-y-6 bg-gray-50">
@@ -310,8 +310,8 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Prise en charge</p>
                     <p className="font-[800] text-black leading-tight">{incomingBooking.pickup_address}</p>
                   </div>
-                  <div className="relative pl-6 border-l-2 border-[#34D399]">
-                    <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-[#34D399]" />
+                  <div className="relative pl-6 border-l-2 border-gray-400">
+                    <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-gray-400" />
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Destination</p>
                     <p className="font-[800] text-black leading-tight">{incomingBooking.destination_address}</p>
                   </div>
@@ -335,7 +335,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
                   <button
                     onClick={handleAcceptBooking}
                     disabled={processingAction}
-                    className="flex-1 py-4 rounded-xl font-[900] text-black bg-[#34D399] hover:bg-[#10B981] transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(52,211,153,0.4)]"
+                    className="flex-1 py-4 rounded-xl font-[900] text-white bg-black hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
                   >
                     {processingAction ? "..." : "Accepter"}
                   </button>

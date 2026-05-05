@@ -107,7 +107,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   }, [activeBookingId, pollStatus]);
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-[#34D399] selection:text-black relative flex flex-col">
+    <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-white selection:text-black relative flex flex-col">
       
       {/* 1. HERO IMAGE BACKGROUND */}
       <div className="absolute top-0 left-0 w-full h-[65vh] z-0 overflow-hidden">
@@ -182,7 +182,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                       </div>
                       <button 
                         onClick={() => setShowDatePicker(false)}
-                        className={`w-full py-4 mt-2 rounded-full font-bold text-black transition-colors ${date && time ? "bg-[#34D399]" : "bg-gray-600"} `}
+                        className={`w-full py-4 mt-2 rounded-full font-bold text-black transition-colors ${date && time ? "bg-white" : "bg-gray-600"} `}
                         disabled={!date || !time}
                       >
                         Valider l'horaire
@@ -308,9 +308,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                         <motion.div 
                           animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
                           transition={{ repeat: Infinity, duration: 2 }}
-                          className="absolute inset-0 bg-[#34D399] rounded-full"
+                          className="absolute inset-0 bg-white rounded-full"
                         />
-                        <div className="absolute inset-4 bg-[#34D399] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.4)]">
+                        <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
                             <path d="M12 2v2M12 20v2M2 12h2M20 12h2M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
                           </svg>
@@ -326,16 +326,16 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                       <motion.div 
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-20 h-20 bg-[#34D399] rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(52,211,153,0.3)]"
+                        className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                       >
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="4">
                           <path d="M20 6 9 17l-5-5"></path>
                         </svg>
                       </motion.div>
-                      <h3 className="text-2xl font-[900] text-[#34D399] mb-2">Course Acceptée !</h3>
-                      <p className="text-white font-medium mb-1">{driver.publicName} est en route.</p>
+                      <h3 className="text-2xl font-[900] text-white mb-2">Course Acceptée !</h3>
+                      <p className="text-white/80 font-medium mb-1">{driver.publicName} est en route.</p>
                       <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mt-4">
-                        <span className="w-2 h-2 rounded-full bg-[#34D399] animate-pulse" />
+                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                         <span className="text-sm font-bold">Arrivée estimée : 5-10 min</span>
                       </div>
                     </>
