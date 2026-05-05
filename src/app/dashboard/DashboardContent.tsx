@@ -90,7 +90,8 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
 
   // Listen for incoming bookings (Realtime + Robust Polling)
   useEffect(() => {
-    if (!profile?.id) return;
+    const driverId = initialProfile?.id;
+    if (!driverId) return;
     const supabase = createClient();
 
     // 1. Robust Polling (every 3s)
@@ -100,7 +101,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
         const { data, error } = await supabase
           .from("bookings")
           .select("*")
-          .eq("driver_id", profile.id)
+          .eq("driver_id", driverId)
           .eq("status", "pending")
           .order("created_at", { ascending: false })
           .limit(1);
@@ -126,7 +127,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
           event: "INSERT",
           schema: "public",
           table: "bookings",
-          filter: `driver_id=eq.${profile.id}`,
+          filter: `driver_id=eq.${driverId}`,
         },
         (payload) => {
           if (payload.new.status === "pending") {
@@ -140,7 +141,7 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
       clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, [profile?.id]);
+  }, [initialProfile?.id]);
 
   async function handleAcceptBooking() {
     if (!incomingBooking) return;
