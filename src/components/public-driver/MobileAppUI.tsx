@@ -78,15 +78,22 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         const results = data.features.map((f: any) => {
           const p = f.properties;
           const name = p.name || "";
+          const housenumber = p.housenumber || "";
           const street = p.street || "";
           const city = p.city || p.town || p.village || "";
           const postcode = p.postcode || "";
           
-          // Format nicely
-          let label = name;
-          if (street && street !== name) label = `${street}, ${label}`;
-          if (city) label = `${label}, ${city}`;
-          if (postcode) label = `${label} ${postcode}`;
+          // Format: [N°] [Rue], [Ville] [CP]
+          let label = "";
+          if (housenumber) label += `${housenumber} `;
+          if (street) {
+            label += street;
+          } else {
+            label += name;
+          }
+          
+          if (city) label += `, ${city}`;
+          if (postcode) label += ` ${postcode}`;
           
           return label;
         });
