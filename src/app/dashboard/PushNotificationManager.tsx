@@ -24,8 +24,9 @@ export default function PushNotificationManager() {
   async function subscribeToPush() {
     setLoading(true);
     try {
-      // Enregistrer le Service Worker si ce n'est pas déjà fait
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      // S'assurer que le Service Worker est enregistré et actif
+      await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.ready;
       
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!publicKey) throw new Error("VAPID public key missing");
