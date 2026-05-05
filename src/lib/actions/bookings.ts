@@ -82,8 +82,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       return { success: false, error: "Erreur lors de la création de la réservation.", errorCode: "NETWORK_ERROR" };
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/bookings");
+    // Return immediately to make the client UI ultra-fast.
+    // Dashboard handles updates via Realtime/Polling.
     return { success: true, booking: { id: result.booking_id } };
   } catch (e) {
     console.error("createBooking error:", e);

@@ -103,6 +103,8 @@ export default function DashboardContent({ user, profile: initialProfile }: { us
           .select("*")
           .eq("driver_id", driverId)
           .eq("status", "pending")
+          // Cache-buster: forces mobile browsers (iOS Safari) to bypass GET cache
+          .neq("id", `cache-bust-${Date.now()}`)
           .order("created_at", { ascending: false })
           .limit(1);
 

@@ -61,6 +61,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
         .from("bookings")
         .select("status")
         .eq("id", bookingId)
+        .neq("id", `cache-bust-${Date.now()}`)
         .single();
       if (!error && data?.status && data.status !== statusRef.current) {
         setBookingStatus(data.status);
