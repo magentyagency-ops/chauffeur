@@ -56,7 +56,7 @@ export default function RegisterPage() {
         is_available: false, // Explicitly set to false to avoid any default value ambiguity
       });
 
-      router.push("/welcome");
+      router.push("/pricing");
     } catch {
       setGlobalError("Une erreur inattendue est survenue.");
     } finally {

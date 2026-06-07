@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/welcome?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing`,
       metadata: {
         supabase_user_id: user.id,
