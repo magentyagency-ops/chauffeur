@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     if (!priceId) {
       console.error('STRIPE_PRICE_ID is not set in environment variables.');
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+      return NextResponse.json({ error: 'La variable STRIPE_PRICE_ID est manquante sur Vercel' }, { status: 500 });
     }
 
     // Check if user already has a stripe customer id in database

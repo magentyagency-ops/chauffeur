@@ -17,7 +17,7 @@ export default function PricingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Erreur lors de la création de la session de paiement.');
+        alert('Erreur: ' + (data.error || 'Erreur lors de la création de la session de paiement.'));
       }
     } catch (error) {
       console.error(error);
