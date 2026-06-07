@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 
 export default function GlobalBookingListener({ driverId }: { driverId: string }) {
   const [incomingBooking, setIncomingBooking] = useState<any | null>(null);
+  const [cancelledNotification, setCancelledNotification] = useState<any | null>(null);
   const [processingAction, setProcessingAction] = useState(false);
   const router = useRouter();
 
@@ -32,6 +33,22 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
             if (current && current.id === data[0].id) return current;
             return data[0];
           });
+        } else {
+          // If the current incoming booking was cancelled, it will no longer be pending.
+          // But we also want to poll for cancellation notifications explicitly:
+        }
+
+        const { data: cancelledData, error: cancelledError } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("driver_id", driverId)
+          .eq("type", "booking_cancelled")
+          .eq("read", false)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!cancelledError && cancelledData && cancelledData.length > 0) {
+          setCancelledNotification(cancelledData[0]);
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -76,6 +93,20 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
     } else {
       alert("Erreur lors du refus de la course.");
     }
+  }
+
+  async function handleDismissCancelled() {
+    if (!cancelledNotification) return;
+    setProcessingAction(true);
+    const supabase = createClient();
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", cancelledNotification.id);
+    
+    setProcessingAction(false);
+    setCancelledNotification(null);
+    router.refresh();
   }
 
   return (
@@ -161,6 +192,49 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Popup for Cancelled Booking */}
+      {cancelledNotification && !incomingBooking && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-red-950/80 backdrop-blur-md"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl flex flex-col"
+          >
+            <div className="bg-red-600 text-white p-8 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-red-800 via-red-600/80 to-transparent z-10" />
+              <div className="relative z-20">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,255,255,0.5)]">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-[900] tracking-tight font-display text-white">Course Annulée</h2>
+              </div>
+            </div>
+            <div className="p-8 space-y-6 bg-gray-50 text-center">
+              <p className="font-bold text-xl text-black">{cancelledNotification.message}</p>
+              
+              <div className="pt-4">
+                <button
+                  onClick={handleDismissCancelled}
+                  disabled={processingAction}
+                  className="w-full py-4 rounded-xl font-[900] text-white bg-black hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+                >
+                  {processingAction ? "..." : "Compris"}
+                </button>
               </div>
             </div>
           </motion.div>
