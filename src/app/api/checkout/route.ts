@@ -43,9 +43,8 @@ export async function POST(req: Request) {
       });
       customerId = customer.id;
 
-      // We'll let the webhook handle saving the customer ID, or we can save it now.
       // But saving it now is safer.
-      const { error } = await supabaseAdmin()
+      const { error } = await supabase
         .from('driver_profiles')
         .update({ stripe_customer_id: customerId })
         .eq('id', user.id);
@@ -80,10 +79,3 @@ export async function POST(req: Request) {
   }
 }
 
-// We need the admin client to bypass RLS if updating server-side, 
-// though updating own profile should pass RLS. Let's use standard client but be careful.
-// Actually, using the admin client is safer here. Let's fetch it.
-import { createAdminClient } from '@/lib/supabase/admin';
-function supabaseAdmin() {
-    return createAdminClient();
-}
