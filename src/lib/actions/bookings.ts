@@ -104,6 +104,58 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
   }
 }
 
+// ─── cancelBookingByClient ────────────────────────────────────────────────
+export async function cancelBookingByClient(bookingId: string) {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const supabaseAdmin = createAdminClient();
+
+    // Verify booking exists and is cancellable
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("status, driver_id, client_name")
+      .eq("id", bookingId)
+      .single();
+
+    if (!booking) return { success: false, error: "Réservation introuvable." };
+    if (["completed", "cancelled", "refused"].includes(booking.status)) {
+      return { success: false, error: "Cette course ne peut plus être annulée." };
+    }
+
+    // Update status to cancelled
+    const { error: updateErr } = await supabaseAdmin
+      .from("bookings")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", bookingId);
+
+    if (updateErr) return { success: false, error: "Erreur lors de l'annulation." };
+
+    // Create event
+    await supabaseAdmin.from("booking_events").insert({
+      booking_id: bookingId,
+      driver_id: booking.driver_id,
+      event_type: "status_cancelled",
+      previous_status: booking.status,
+      new_status: "cancelled",
+      message: "Annulée par le client.",
+    });
+
+    // Create notification for driver
+    await supabaseAdmin.from("notifications").insert({
+      driver_id: booking.driver_id,
+      booking_id: bookingId,
+      type: "booking_cancelled",
+      title: "Réservation annulée",
+      message: `${booking.client_name} a annulé sa réservation.`,
+    });
+
+    return { success: true };
+  } catch (e) {
+    console.error("cancelBookingByClient error:", e);
+    return { success: false, error: "Une erreur est survenue." };
+  }
+}
+
 // ─── getBookingStatus (Public) ──────────────────────────────────────────
 export async function getBookingStatus(bookingId: string) {
   try {

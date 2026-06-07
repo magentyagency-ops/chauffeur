@@ -157,6 +157,33 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   };
 
   const [driverEta, setDriverEta] = useState<number | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelBooking = async () => {
+    if (!activeBookingId) return;
+    
+    const confirmMsg = bookingStatus === "accepted" 
+      ? `Êtes-vous sûr de vouloir annuler ? ${driver.publicName} est déjà en route.`
+      : `Êtes-vous sûr de vouloir annuler la demande pour ${driver.publicName} ?`;
+      
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsCancelling(true);
+    try {
+      const { cancelBookingByClient } = await import("@/lib/actions/bookings");
+      const res = await cancelBookingByClient(activeBookingId);
+      if (res.success) {
+        setBookingStatus("cancelled");
+        setActiveBookingId(null);
+      } else {
+        alert(res.error || "Erreur lors de l'annulation.");
+      }
+    } catch (e) {
+      alert("Une erreur est survenue.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   // Direct client-side polling function via Server Action (Secure)
   const pollStatus = useCallback(async (bookingId: string) => {
@@ -540,9 +567,16 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                           </div>
                         </div>
                         <h3 className="text-xl font-[800] mb-2">{driver.publicName} traite votre demande</h3>
-                        <p className="text-gray-400 text-sm leading-relaxed max-w-[240px]">
+                        <p className="text-gray-400 text-sm leading-relaxed max-w-[240px] mb-4">
                           Demande envoyée à <span className="text-white font-bold">{driver.publicName}</span>.
                         </p>
+                        <button 
+                          onClick={handleCancelBooking}
+                          disabled={isCancelling}
+                          className="mt-2 px-6 py-2 rounded-full bg-red-500/10 text-red-500 font-bold text-sm hover:bg-red-500/20 transition-colors border border-red-500/20"
+                        >
+                          {isCancelling ? "Annulation..." : "Annuler la demande"}
+                        </button>
                       </>
                     ) : (
                       <>
@@ -583,7 +617,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                 </div>
               </div>
               
-              <div className="bg-white/5 rounded-2xl p-4 flex items-center justify-between border border-white/5 shadow-inner">
+               <div className="bg-white/5 rounded-2xl p-4 flex items-center justify-between border border-white/5 shadow-inner mb-4">
                  <div>
                    <p className="font-[800] text-white text-lg">{driver.publicName}</p>
                    <p className="text-sm text-gray-400 font-medium">{driver.vehicle.model}</p>
@@ -592,6 +626,15 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                    4.9 ★
                  </div>
               </div>
+              
+              <button 
+                onClick={handleCancelBooking}
+                disabled={isCancelling}
+                className="w-full py-4 rounded-xl bg-red-500/10 text-red-500 font-bold hover:bg-red-500/20 transition-colors border border-red-500/20 flex items-center justify-center gap-2"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                {isCancelling ? "Annulation..." : "Annuler la course"}
+              </button>
             </motion.div>
           )}
 
