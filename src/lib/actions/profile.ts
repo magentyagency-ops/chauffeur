@@ -53,7 +53,7 @@ export async function updateDriverProfile(data: {
     if (data.bio !== undefined) updatePayload.bio = data.bio;
     if (data.public_slug !== undefined) updatePayload.public_slug = data.public_slug;
     if (data.vehicle_model !== undefined) updatePayload.vehicle_model = data.vehicle_model;
-    if (data.profile_photo_url !== undefined) updatePayload.profile_photo_url = data.profile_photo_url;
+    if (data.profile_photo_url !== undefined) updatePayload.avatar_url = data.profile_photo_url;
 
     const { error } = await supabase
       .from("driver_profiles")

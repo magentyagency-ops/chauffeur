@@ -43,8 +43,8 @@ export default function ProfilePage() {
             publicSlug: dbProfile.public_slug || "",
           };
           setProfile(initialProfile);
-          if (dbProfile.profile_photo_url) {
-            setProfilePhoto(dbProfile.profile_photo_url);
+          if (dbProfile.avatar_url) {
+            setProfilePhoto(dbProfile.avatar_url);
           } else {
             setProfilePhoto(savedPhoto);
           }

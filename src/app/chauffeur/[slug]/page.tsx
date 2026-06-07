@@ -9,14 +9,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient();
   const { data: dbProfile } = await supabase
     .from("driver_profiles")
-    .select("full_name, profile_photo_url, city")
+    .select("full_name, avatar_url, city")
     .eq("public_slug", slug)
     .single();
 
   if (!dbProfile) return { title: "Chauffeur introuvable" };
 
   const name = dbProfile.full_name;
-  const photo = dbProfile.profile_photo_url || "/favicon.ico";
+  const photo = dbProfile.avatar_url || "/favicon.ico";
 
   return {
     title: `${name} — Votre Chauffeur Privé à ${dbProfile.city}`,
@@ -62,7 +62,7 @@ export default async function PublicDriverPage({ params }: { params: Promise<{ s
     shortDescription: dbProfile.bio || `Chauffeur privé à ${dbProfile.city || "votre service"}. Réservez votre course en toute simplicité.`,
     phone: dbProfile.phone || mockPublicDriver.phone,
     whatsapp: dbProfile.whatsapp || dbProfile.phone || mockPublicDriver.whatsapp,
-    profilePhotoUrl: dbProfile.profile_photo_url || null,
+    profilePhotoUrl: dbProfile.avatar_url || null,
     vehicle: {
       ...mockPublicDriver.vehicle,
       model: dbProfile.vehicle_model || mockPublicDriver.vehicle.model,
