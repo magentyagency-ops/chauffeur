@@ -134,61 +134,6 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Dashboard preview */}
-        <div className="fade-up max-w-4xl mx-auto mt-20" style={{ animationDelay: ".2s" }}>
-          <div className="card p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,.12)]">
-            {/* Browser bar */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-border rounded-t-xl">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-              </div>
-              <div className="flex-1 max-w-xs mx-auto bg-surface-alt rounded-md px-3 py-1.5 text-center">
-                <span className="text-[11px] text-muted font-mono">app.vroompro.fr</span>
-              </div>
-            </div>
-            {/* Content */}
-            <div className="grid grid-cols-[180px_1fr] min-h-[280px] bg-background rounded-b-xl overflow-hidden">
-              {/* Mini sidebar */}
-              <div className="bg-surface border-r border-border p-4 hidden md:block">
-                <div className="text-[10px] font-semibold text-muted uppercase tracking-widest px-2 mb-3">Espace pro</div>
-                {["Accueil", "Réservations", "Clients"].map((l, i) => (
-                  <div key={l} className={`text-[12px] px-3 py-2 rounded-lg mb-0.5 ${i === 0 ? "bg-surface-alt font-semibold text-foreground" : "text-muted"}`}>{l}</div>
-                ))}
-              </div>
-              {/* Mini dashboard */}
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-lg font-semibold tracking-tight">Bonjour Jean</div>
-                    <div className="text-[11px] text-muted">Aujourd'hui · 3 courses</div>
-                  </div>
-                  <div className="pill bg-surface border border-border !text-[11px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                    <span className="text-success font-medium">En ligne</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[["5", "Demandes"], ["3", "Confirmées"], ["42", "Clients"], ["285€", "Revenu"]].map(([v, l]) => (
-                    <div key={l} className="card p-3 !rounded-lg">
-                      <div className="text-lg font-semibold tracking-tight">{v}</div>
-                      <div className="text-[10px] text-muted font-medium">{l}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card p-3 !rounded-lg flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center text-[11px] font-bold">S</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] font-semibold">Sophie M. · 14:30</div>
-                    <div className="text-[11px] text-muted truncate">CDG T2E → Hôtel Ritz</div>
-                  </div>
-                  <div className="text-sm font-semibold">85€</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ═══ FEATURES ═══ */}
