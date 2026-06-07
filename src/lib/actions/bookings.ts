@@ -159,8 +159,7 @@ export async function cancelBookingByClient(bookingId: string) {
 // ─── getBookingStatus (Public) ──────────────────────────────────────────
 export async function getBookingStatus(bookingId: string) {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("bookings")
       .select("status, driver_eta_minutes")
       .eq("id", bookingId)

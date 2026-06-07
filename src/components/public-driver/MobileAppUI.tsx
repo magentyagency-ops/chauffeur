@@ -211,7 +211,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
 
     // 1. Polling every 2s directly from browser (no server action)
     const interval = setInterval(() => {
-      if (!stopped && statusRef.current !== "accepted") {
+      if (!stopped && !["completed", "cancelled", "refused"].includes(statusRef.current || "")) {
         pollStatus(activeBookingId);
       }
     }, 2000);
