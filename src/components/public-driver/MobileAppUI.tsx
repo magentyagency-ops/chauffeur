@@ -156,17 +156,19 @@ export default function MobileAppUI({ driver }: { driver: any }) {
     }
   };
 
+  const [driverEta, setDriverEta] = useState<number | null>(null);
+
   // Direct client-side polling function via Server Action (Secure)
   const pollStatus = useCallback(async (bookingId: string) => {
     try {
-      // Import dynamically or pass from parent?
-      // Wait, we need to import getBookingStatus at the top of the file!
-      // I'll assume getBookingStatus is exported from "@/lib/actions/bookings".
       const { getBookingStatus } = await import("@/lib/actions/bookings");
-      const status = await getBookingStatus(bookingId);
+      const res = await getBookingStatus(bookingId);
       
-      if (status && status !== statusRef.current) {
-        setBookingStatus(status);
+      if (res && res.status !== statusRef.current) {
+        setBookingStatus(res.status);
+      }
+      if (res && res.eta !== undefined && res.eta !== null) {
+        setDriverEta(res.eta);
       }
     } catch (e) {
       console.error("Poll error:", e);
@@ -570,7 +572,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                   <h3 className="text-3xl font-[900] text-white tracking-tight mb-1">En route</h3>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                    <p className="text-white/80 font-bold text-sm">Arrivée estimée : ~5 min</p>
+                    <p className="text-white/80 font-bold text-sm">Arrivée estimée : {driverEta !== null ? (driverEta === 0 ? "Imminente" : `${driverEta} min`) : "Calcul en cours..."}</p>
                   </div>
                 </div>
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 shrink-0">

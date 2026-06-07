@@ -41,16 +41,20 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
     return () => clearInterval(interval);
   }, [driverId]);
 
-  async function handleAcceptBooking() {
+  const [showEtaSelection, setShowEtaSelection] = useState(false);
+
+  async function handleAcceptBooking(etaMinutes?: number) {
     if (!incomingBooking) return;
     setProcessingAction(true);
     const res = await updateBookingStatus({
       bookingId: incomingBooking.id,
       newStatus: "accepted",
+      etaMinutes: etaMinutes
     });
     setProcessingAction(false);
     if (res.success && res.booking) {
       setIncomingBooking(null);
+      setShowEtaSelection(false);
       router.refresh(); // Refresh current page to update lists instantly
     } else {
       alert("Erreur lors de l'acceptation de la course.");
@@ -67,6 +71,7 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
     setProcessingAction(false);
     if (res.success) {
       setIncomingBooking(null);
+      setShowEtaSelection(false);
       router.refresh();
     } else {
       alert("Erreur lors du refus de la course.");
@@ -126,20 +131,36 @@ export default function GlobalBookingListener({ driverId }: { driverId: string }
               )}
 
               <div className="flex gap-4 pt-4">
-                <button
-                  onClick={handleRefuseBooking}
-                  disabled={processingAction}
-                  className="flex-1 py-4 rounded-xl font-bold text-gray-500 bg-white border-2 border-gray-200 hover:bg-gray-100 hover:text-black hover:border-gray-300 transition-all active:scale-[0.98]"
-                >
-                  {processingAction ? "..." : "Refuser"}
-                </button>
-                <button
-                  onClick={handleAcceptBooking}
-                  disabled={processingAction}
-                  className="flex-1 py-4 rounded-xl font-[900] text-white bg-black hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
-                >
-                  {processingAction ? "..." : "Accepter"}
-                </button>
+                {!showEtaSelection ? (
+                  <>
+                    <button
+                      onClick={handleRefuseBooking}
+                      disabled={processingAction}
+                      className="flex-1 py-4 rounded-xl font-bold text-gray-500 bg-white border-2 border-gray-200 hover:bg-gray-100 hover:text-black hover:border-gray-300 transition-all active:scale-[0.98]"
+                    >
+                      {processingAction ? "..." : "Refuser"}
+                    </button>
+                    <button
+                      onClick={() => setShowEtaSelection(true)}
+                      disabled={processingAction}
+                      className="flex-1 py-4 rounded-xl font-[900] text-white bg-black hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(0,0,0,0.4)]"
+                    >
+                      Accepter
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full space-y-4 animate-fade-in">
+                    <p className="text-center font-[800] text-black">Temps d'arrivée estimé :</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleAcceptBooking(0)} disabled={processingAction} className="py-3 rounded-xl font-[800] text-black bg-white border-2 border-gray-200 hover:border-black transition-all">Maintenant</button>
+                      <button onClick={() => handleAcceptBooking(10)} disabled={processingAction} className="py-3 rounded-xl font-[800] text-black bg-white border-2 border-gray-200 hover:border-black transition-all">10 min</button>
+                      <button onClick={() => handleAcceptBooking(15)} disabled={processingAction} className="py-3 rounded-xl font-[800] text-black bg-white border-2 border-gray-200 hover:border-black transition-all">15 min</button>
+                      <button onClick={() => handleAcceptBooking(20)} disabled={processingAction} className="py-3 rounded-xl font-[800] text-black bg-white border-2 border-gray-200 hover:border-black transition-all">20 min</button>
+                      <button onClick={() => handleAcceptBooking(30)} disabled={processingAction} className="py-3 rounded-xl font-[800] text-black bg-white border-2 border-gray-200 hover:border-black transition-all">30 min</button>
+                      <button onClick={() => setShowEtaSelection(false)} disabled={processingAction} className="py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">Annuler</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

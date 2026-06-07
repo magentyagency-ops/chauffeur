@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.driver_profiles (
   public_slug TEXT NOT NULL UNIQUE,
   is_available BOOLEAN DEFAULT false,
   bio TEXT,
+  whatsapp TEXT,
   avatar_url TEXT,
   stripe_customer_id TEXT UNIQUE,
   stripe_subscription_id TEXT UNIQUE,

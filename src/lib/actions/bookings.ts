@@ -110,12 +110,12 @@ export async function getBookingStatus(bookingId: string) {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("bookings")
-      .select("status")
+      .select("status, driver_eta_minutes")
       .eq("id", bookingId)
       .single();
     
     if (error || !data) return null;
-    return data.status;
+    return { status: data.status, eta: data.driver_eta_minutes };
   } catch {
     return null;
   }
@@ -128,6 +128,7 @@ export async function updateBookingStatus(input: {
   reason?: string;
   estimatedPrice?: number;
   finalPrice?: number;
+  etaMinutes?: number;
 }) {
   try {
     const supabase = await createClient();
@@ -168,6 +169,7 @@ export async function updateBookingStatus(input: {
     };
     if (input.estimatedPrice !== undefined) updateData.estimated_price = input.estimatedPrice;
     if (input.finalPrice !== undefined) updateData.final_price = input.finalPrice;
+    if (input.etaMinutes !== undefined) updateData.driver_eta_minutes = input.etaMinutes;
 
     const { data: updated, error: updateErr } = await supabase
       .from("bookings")

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { isAvailabilityActive, getPersistedAvailability } from "@/lib/mockAvailability";
 import { getMarketingState, PromoCode } from "@/lib/mockMarketing";
-import { createBooking, type CreateBookingInput } from "@/lib/actions/bookings";
+import { createBooking, getBookingStatus, type CreateBookingInput } from "@/lib/actions/bookings";
 
 type BookingData = {
   pickup: string;
@@ -35,6 +35,8 @@ export default function BookingForm({ availability: initialAvailability, driverS
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [trackingStep, setTrackingStep] = useState(1); // 1: Envoyé, 2: Confirmé, 3: En route
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [driverEta, setDriverEta] = useState<number | null>(null);
   const [serverError, setServerError] = useState<{ message: string; code?: string } | null>(null);
   
   const [promoCodeInput, setPromoCodeInput] = useState("");
@@ -55,14 +57,28 @@ export default function BookingForm({ availability: initialAvailability, driverS
     setData(prev => ({ ...prev, timing: isAvailabilityActive(saved) ? "now" : "later" }));
   }, []);
 
-  // Simulate tracking progression
+  // Real-time polling progression
   useEffect(() => {
-    if (sent) {
-      const timer1 = setTimeout(() => setTrackingStep(2), 3000); // After 3s, show confirmed
-      const timer2 = setTimeout(() => setTrackingStep(3), 6000); // After 6s, show en route
-      return () => { clearTimeout(timer1); clearTimeout(timer2); };
-    }
-  }, [sent]);
+    if (!sent || !bookingId) return;
+
+    const interval = setInterval(async () => {
+      const statusRes = await getBookingStatus(bookingId);
+      if (statusRes && statusRes.status === "accepted") {
+        setTrackingStep(2); // Confirmed
+        if (statusRes.eta !== null && statusRes.eta !== undefined) {
+           setDriverEta(statusRes.eta);
+           setTimeout(() => setTrackingStep(3), 1000); // Small delay before moving to step 3
+        }
+        clearInterval(interval);
+      } else if (statusRes && statusRes.status === "refused") {
+        setServerError({ message: "Le chauffeur n'est malheureusement pas disponible pour cette course." });
+        setSent(false);
+        clearInterval(interval);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [sent, bookingId]);
 
   if (!isOpen) return null;
 
@@ -128,9 +144,10 @@ export default function BookingForm({ availability: initialAvailability, driverS
 
     const result = await createBooking(input);
     setSending(false);
-    if (result.success) {
+    if (result.success && result.booking) {
       setSent(true);
       setTrackingStep(1);
+      setBookingId(result.booking.id);
     }
     else setServerError({ message: result.error || "Erreur." });
   }
@@ -190,7 +207,7 @@ export default function BookingForm({ availability: initialAvailability, driverS
                 </div>
                 <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] card p-4 ml-4 md:ml-0 border-accent/30 bg-accent/[0.02]">
                   <h4 className={`font-bold text-[14px] ${trackingStep >= 3 ? 'text-accent' : 'text-muted'}`}>Chauffeur en route</h4>
-                  <p className="text-[12px] text-muted">Arrivée estimée : 8 min.</p>
+                  <p className="text-[12px] text-muted">Arrivée estimée : {driverEta !== null ? (driverEta === 0 ? "Imminente" : `${driverEta} min`) : "Calcul en cours..."}</p>
                 </div>
               </div>
             </div>
@@ -208,7 +225,7 @@ export default function BookingForm({ availability: initialAvailability, driverS
               </button>
             </div>
             
-            <button onClick={() => { setSent(false); setIsOpen(false); }} className="btn-secondary w-full mt-6">Fermer</button>
+            <button onClick={() => { setSent(false); setIsOpen(false); setBookingId(null); setTrackingStep(1); }} className="btn-secondary w-full mt-6">Fermer</button>
           </div>
         ) : (
           <>
