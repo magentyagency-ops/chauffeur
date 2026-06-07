@@ -42,7 +42,7 @@ export default function SplashScreen() {
             transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
             className="flex flex-col items-center"
           >
-            <div className="relative w-80 h-32 md:w-[28rem] md:h-48 flex justify-center items-center">
+            <div className="relative w-[22rem] h-40 md:w-[40rem] md:h-[18rem] flex justify-center items-center">
               <Image 
                 src="/vroomlogo.png" 
                 alt="Logo Vroom" 
@@ -55,7 +55,7 @@ export default function SplashScreen() {
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: "50%", opacity: 1 }}
               transition={{ duration: 1, delay: 0.8, ease: "circOut" }}
-              className="h-[2px] bg-white mt-6 rounded-full"
+              className="h-[2px] bg-white mt-1 rounded-full"
             />
           </motion.div>
         </motion.div>
