@@ -206,3 +206,119 @@ h1, h2, h3, h4 {
   background: var(--surface-alt);
   font-weight: 600;
 }
+
+/* ─── Grain Overlay ────────────────────────────── */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ─── Glow Effects ─────────────────────────────── */
+.glow-green {
+  position: relative;
+}
+.glow-green::before {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6,193,103,.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Glass Card ───────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, border-color .3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0,0,0,.08);
+  border-color: rgba(6,193,103,.2);
+}
+
+/* ─── Dark Section Links ───────────────────────── */
+.dark-section {
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+/* ─── Animated Counter ─────────────────────────── */
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ─── Timeline ─────────────────────────────────── */
+.timeline-dot {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease;
+}
+.timeline-dot.visible {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 8px rgba(6,193,103,.12);
+}
+
+/* ─── Quote mark ───────────────────────────────── */
+.quote-mark {
+  font-size: 80px;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: var(--success);
+  opacity: .4;
+  position: absolute;
+  top: -10px;
+  left: 20px;
+}
+
+/* ─── Enhanced btn-accent (green) ──────────────── */
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--success);
+  color: #0a0a0a;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.btn-accent:hover {
+  opacity: .92;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(6,193,103,.35);
+}
+.btn-accent:active { transform: translateY(0); }
+
+/* ─── Gradient text ────────────────────────────── */
+.gradient-text-green {
+  background: linear-gradient(135deg, #06C167, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
