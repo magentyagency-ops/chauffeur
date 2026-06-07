@@ -289,6 +289,23 @@ export default function MobileAppUI({ driver }: { driver: any }) {
             <div className={`rounded-[2rem] p-3 mt-4 mb-6 relative min-h-[160px] flex flex-col justify-center ${cardBg}`}>
               <AnimatePresence mode="wait">
                 {!activeBookingId ? (
+                  !driver.isAvailable ? (
+                    <motion.div 
+                      key="offline"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col items-center justify-center py-10 px-6 text-center"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-inner">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="gray" strokeWidth="2.5"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><path d="M12 2v4"/><path d="m2 2 20 20"/></svg>
+                      </div>
+                      <h3 className="text-xl font-[800] text-white mb-2">Chauffeur Indisponible</h3>
+                      <p className="text-gray-400 text-sm leading-relaxed max-w-[280px]">
+                        {driver.publicName} n'accepte actuellement aucune réservation. Veuillez réessayer plus tard.
+                      </p>
+                    </motion.div>
+                  ) : (
                   <motion.div 
                     key="form"
                     initial={{ opacity: 0 }}
@@ -545,6 +562,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
                       </div>
                     )}
                   </motion.div>
+                  )
                 ) : (
                   <motion.div 
                     key="status-pending"
@@ -639,7 +657,7 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           )}
 
           {/* CTA BOUTON - HIDDEN IF ACTIVE BOOKING */}
-          {!activeBookingId && (
+          {!activeBookingId && driver.isAvailable && (
             <div className="flex">
               <button 
                 onClick={handleSubmit}

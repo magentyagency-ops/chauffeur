@@ -60,9 +60,9 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       return { success: false, error: "Chauffeur introuvable.", errorCode: "DRIVER_NOT_FOUND" };
     }
 
-    // If booking type is "now", check availability
-    if (input.bookingType === "now" && !driver.is_available) {
-      return { success: false, error: "Ce chauffeur n'est plus disponible pour une course immédiate. Vous pouvez réserver pour plus tard.", errorCode: "DRIVER_UNAVAILABLE" };
+    // Enforce strict availability: NO bookings allowed if driver is offline
+    if (!driver.is_available) {
+      return { success: false, error: "Ce chauffeur est actuellement indisponible. Aucune réservation n'est possible pour le moment.", errorCode: "DRIVER_UNAVAILABLE" };
     }
 
     // Execute the secure RPC function to bypass RLS for creating clients and bookings
