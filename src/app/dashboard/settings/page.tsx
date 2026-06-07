@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import Link from "next/link";
 
 export default function SettingsPage() {
   return (
@@ -26,6 +27,23 @@ export default function SettingsPage() {
           <div className="card divide-y divide-border overflow-hidden">
             <ToggleRow title="Nouvelles réservations" desc="Email et SMS pour chaque demande." active />
             <ToggleRow title="Rappels de course" desc="Alerte 1h avant le départ." active />
+          </div>
+        </section>
+
+        {/* Aide & Tutoriel */}
+        <section className="space-y-4">
+          <h3 className="text-lg font-bold tracking-tight">Aide & Tutoriel</h3>
+          <div className="card p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-[14px] font-bold">Revoir le tutoriel de bienvenue</p>
+              <p className="text-[13px] text-muted mt-1">Repassez par les étapes clés pour apprendre à utiliser la plateforme et à partager votre QR code.</p>
+            </div>
+            <Link 
+              href="/welcome"
+              className="bg-white border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-full transition-all font-bold px-5 py-2.5 text-[13px] text-black text-center w-full sm:w-auto shrink-0"
+            >
+              Revoir le tutoriel
+            </Link>
           </div>
         </section>
 
