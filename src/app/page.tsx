@@ -69,7 +69,6 @@ function Arrow() {
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
-  const [annual, setAnnual] = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -260,73 +259,46 @@ export default function LandingPage() {
               </h2>
             </div>
 
-            {/* Toggle */}
-            <div className="flex items-center justify-center gap-3 mb-12">
-              <span className={`text-sm font-medium ${!annual ? "text-foreground" : "text-muted"}`}>Mensuel</span>
-              <button
-                onClick={() => setAnnual(!annual)}
-                className="relative w-11 h-6 rounded-full transition-colors"
-                style={{ background: annual ? "var(--foreground)" : "var(--border)" }}
+            <div className="max-w-md mx-auto">
+              <div
+                className="rounded-2xl p-8 transition-shadow bg-foreground text-background shadow-[0_16px_40px_-8px_rgba(0,0,0,.25)]"
               >
-                <div className="absolute top-1 w-4 h-4 rounded-full bg-surface shadow-sm transition-all" style={{ left: annual ? 22 : 4 }} />
-              </button>
-              <span className={`text-sm font-medium ${annual ? "text-foreground" : "text-muted"}`}>Annuel</span>
-              <span className="text-[11px] font-semibold text-success bg-success/10 px-2.5 py-1 rounded-full">−20%</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { name: "Starter", price: annual ? 24 : 29, tagline: "Pour démarrer", pop: false, features: ["Page chauffeur publique", "Réservation directe", "Jusqu'à 50 clients", "Notifications email"] },
-                { name: "Pro", price: annual ? 65 : 79, tagline: "Le plus populaire", pop: true, features: ["Tout Starter +", "CRM clients complet", "Clients illimités", "Notifications SMS", "Statistiques avancées", "Support prioritaire"] },
-                { name: "Premium", price: annual ? 119 : 149, tagline: "Pour les flottes", pop: false, features: ["Tout Pro +", "Multi-véhicules", "Facturation automatique", "API & Marque blanche"] },
-              ].map(plan => (
-                <div
-                  key={plan.name}
-                  className="rounded-2xl p-7 transition-shadow"
-                  style={{
-                    background: plan.pop ? "var(--foreground)" : "var(--background)",
-                    color: plan.pop ? "var(--background)" : "var(--foreground)",
-                    border: plan.pop ? "none" : "1px solid var(--border)",
-                    boxShadow: plan.pop ? "0 16px 40px -8px rgba(0,0,0,.25)" : "none",
-                  }}
-                >
-                  <div className="flex items-start justify-between mb-6">
-                    <div>
-                      <h3 className="text-xl font-semibold tracking-tight">{plan.name}</h3>
-                      <p className="text-[12px] mt-1" style={{ opacity: .6 }}>{plan.tagline}</p>
-                    </div>
-                    {plan.pop && <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h3 className="text-2xl font-semibold tracking-tight">Indépendant</h3>
+                    <p className="text-[13px] mt-1 opacity-70">Tout ce dont vous avez besoin</p>
                   </div>
-
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-5xl font-semibold tracking-tight">{plan.price}€</span>
-                    <span className="text-sm" style={{ opacity: .5 }}>/mois</span>
-                  </div>
-                  {annual && <p className="text-[11px] font-mono mb-6" style={{ opacity: .5 }}>Facturé annuellement</p>}
-                  {!annual && <div className="h-4 mb-6" />}
-
-                  <Link
-                    href="/auth/register"
-                    className="block text-center w-full py-3 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
-                    style={{
-                      background: plan.pop ? "var(--background)" : "var(--foreground)",
-                      color: plan.pop ? "var(--foreground)" : "var(--background)",
-                    }}
-                  >
-                    Commencer
-                  </Link>
-
-                  <div className="mt-6 pt-5 flex flex-col gap-2.5" style={{ borderTop: `1px solid ${plan.pop ? "rgba(255,255,255,.12)" : "var(--border)"}` }}>
-                    {plan.features.map(f => (
-                      <div key={f} className="flex items-start gap-2.5 text-[13px]">
-                        {!f.includes("+") && <Check />}
-                        {f.includes("+") && <span className="w-3.5" />}
-                        <span className={f.includes("+") ? "font-semibold" : ""} style={{ opacity: f.includes("+") ? .7 : 1 }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
                 </div>
-              ))}
+
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className="text-6xl font-semibold tracking-tight">29€</span>
+                  <span className="text-sm opacity-50">/mois</span>
+                </div>
+
+                <Link
+                  href="/auth/register"
+                  className="block text-center w-full py-3.5 text-[15px] font-semibold rounded-xl bg-background text-foreground transition-opacity hover:opacity-90"
+                >
+                  Commencer 14 jours gratuits
+                </Link>
+
+                <div className="mt-8 pt-6 flex flex-col gap-3.5 border-t border-white/10">
+                  {[
+                    "Page chauffeur publique",
+                    "Réservation directe sans commission",
+                    "CRM clients complet",
+                    "Clients illimités",
+                    "Notifications instantanées",
+                    "Support prioritaire"
+                  ].map(f => (
+                    <div key={f} className="flex items-start gap-3 text-[14px]">
+                      <Check />
+                      <span className="font-medium opacity-90">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
