@@ -156,13 +156,11 @@ export default function LandingPage() {
       {/* ═══ HERO (Dark) ═══ */}
       <section className="relative pt-48 pb-32 px-6 dark-section overflow-hidden">
         <div className="grain-overlay" />
-        <div className="glow-green absolute top-0 right-0 w-1/2 h-full opacity-50" />
+        {/* Soft, smooth glowing orb */}
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-success/15 blur-[120px] rounded-full pointer-events-none" />
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="fade-up inline-flex items-center gap-2 pill bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
-            <span className="text-[13px] text-white/80 font-medium">+500 chauffeurs en activité</span>
-          </div>
+
 
           <h1 className="fade-up text-[clamp(44px,8vw,80px)] font-bold tracking-tight leading-[1.05] mb-6" style={{ animationDelay: ".04s" }}>
             Votre clientèle privée,<br />
