@@ -36,6 +36,8 @@ export const viewport = {
   userScalable: false,
 };
 
+import SplashScreen from "@/components/SplashScreen";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,7 +45,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <SplashScreen />
+        {children}
+      </body>
     </html>
   );
 }
