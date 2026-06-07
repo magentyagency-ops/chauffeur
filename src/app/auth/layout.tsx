@@ -12,7 +12,7 @@ export default function AuthLayout({
         {/* Logo */}
         <div className="text-center mb-10 flex justify-center">
           <Link href="/" className="relative w-36 h-12 flex items-center justify-center">
-            <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain" priority />
+            <Image src="/logonoir.png" alt="Vroom Logo" fill className="object-contain" priority />
           </Link>
         </div>
 

@@ -36,7 +36,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1">
             <a href="#" className="flex items-center gap-2.5 mb-6">
               <div className="relative w-28 h-8 flex items-center">
-                <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
+                <Image src="/logonoir.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
               </div>
             </a>
             <p className="text-sm text-text-muted leading-relaxed mb-6">

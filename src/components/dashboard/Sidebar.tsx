@@ -34,7 +34,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="h-[80px] flex items-center px-8 border-b border-gray-100/50">
         <Link href="/dashboard" className="relative w-32 h-10 flex items-center">
-          <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
+          <Image src="/logonoir.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
         </Link>
       </div>
 

@@ -13,7 +13,7 @@ import Image from "next/image";
 function Logo() {
   return (
     <Link href="/" className="relative w-28 h-8 flex items-center">
-      <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
+      <Image src="/logonoir.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
     </Link>
   );
 }

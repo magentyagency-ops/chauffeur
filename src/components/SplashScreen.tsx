@@ -44,7 +44,7 @@ export default function SplashScreen() {
           >
             <div className="relative w-[22rem] h-40 md:w-[40rem] md:h-[18rem] flex justify-center items-center">
               <Image 
-                src="/vroomlogo.png" 
+                src="/logoblanc.png" 
                 alt="Logo Vroom" 
                 fill 
                 className="object-contain"

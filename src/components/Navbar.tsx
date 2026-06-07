@@ -33,7 +33,7 @@ export default function Navbar() {
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5 group">
             <div className="relative w-28 h-8 flex items-center">
-              <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
+              <Image src="/logonoir.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
             </div>
           </a>
 
