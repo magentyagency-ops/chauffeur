@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { getPersistedProfile, savePersistedProfile, type DriverProfile, getPersistedPhoto, savePersistedPhoto } from "@/lib/mockProfile";
 import { createClient } from "@/lib/supabase/client";
 import { updateDriverProfile } from "@/lib/actions/profile";
+import { getBaseUrl } from "@/lib/utils/url";
 import PushNotificationManager from "../PushNotificationManager";
 
 export default function ProfilePage() {
@@ -60,7 +61,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && profile?.publicSlug) {
-      const url = `${window.location.origin}/chauffeur/${profile.publicSlug}`;
+      const url = `${getBaseUrl()}/chauffeur/${profile.publicSlug}`;
       setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`);
     }
   }, [profile?.publicSlug]);
@@ -175,7 +176,7 @@ export default function ProfilePage() {
             </div>
             <button 
               onClick={() => {
-                const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/chauffeur/' + profile.publicSlug)}`;
+                const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(getBaseUrl() + '/chauffeur/' + profile.publicSlug)}`;
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = `qrcode-${profile.publicSlug}.png`;
@@ -200,12 +201,12 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 bg-gray-50 border border-gray-100 shadow-inner rounded-2xl px-5 py-4 text-[14px] font-medium text-gray-500 flex items-center min-w-0">
                   <span className="truncate w-full">
-                    {typeof window !== 'undefined' ? `${window.location.origin.replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
+                    {typeof window !== 'undefined' ? `${getBaseUrl().replace('http://', '').replace('https://', '')}/chauffeur/${profile.publicSlug}` : ''}
                   </span>
                 </div>
                 <button 
                   onClick={() => {
-                    navigator.clipboard.writeText(window.location.origin + '/chauffeur/' + profile.publicSlug);
+                    navigator.clipboard.writeText(getBaseUrl() + '/chauffeur/' + profile.publicSlug);
                     alert("Lien copié !");
                   }}
                   className="bg-white border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md rounded-2xl transition-all font-bold px-6 py-4 text-[13px] text-black shrink-0"

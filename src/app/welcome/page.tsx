@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getBaseUrl } from "@/lib/utils/url";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -36,12 +37,12 @@ export default function WelcomePage() {
           fullName: dbProfile.full_name,
           publicSlug: dbProfile.public_slug,
         });
-        const url = `${window.location.origin}/chauffeur/${dbProfile.public_slug}`;
+        const url = `${getBaseUrl()}/chauffeur/${dbProfile.public_slug}`;
         setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`);
       } else {
         // Fallback mock profile if DB fails
         setProfile({ fullName: "Chauffeur", publicSlug: "demo" });
-        setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/chauffeur/demo')}`);
+        setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getBaseUrl() + '/chauffeur/demo')}`);
       }
       setLoading(false);
     }
@@ -50,7 +51,7 @@ export default function WelcomePage() {
 
   const copyLink = () => {
     if (!profile) return;
-    const url = `${window.location.origin}/chauffeur/${profile.publicSlug}`;
+    const url = `${getBaseUrl()}/chauffeur/${profile.publicSlug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -68,7 +69,7 @@ export default function WelcomePage() {
   }
 
   const firstName = profile.fullName.split(" ")[0];
-  const publicUrl = typeof window !== "undefined" ? `${window.location.origin}/chauffeur/${profile.publicSlug}` : "";
+  const publicUrl = typeof window !== "undefined" ? `${getBaseUrl()}/chauffeur/${profile.publicSlug}` : "";
 
   const steps = [
     {
