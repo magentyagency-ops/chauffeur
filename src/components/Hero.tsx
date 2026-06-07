@@ -37,12 +37,12 @@ export default function Hero() {
               <path d="m12 5 7 7-7 7" />
             </svg>
           </a>
-          <a href="#comment-ca-marche" className="btn-secondary text-lg !py-4 !px-8">
+          <a href="https://calendly.com/clarencegomis/demo-vroom" target="_blank" rel="noopener noreferrer" className="btn-secondary text-lg !py-4 !px-8">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
             </svg>
-            <span>Voir une démo</span>
+            <span>Réserver une démo</span>
           </a>
         </div>
 

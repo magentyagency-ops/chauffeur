@@ -21,9 +21,9 @@ export default function Footer() {
       { label: "Statut du service", href: "#" },
     ],
     Légal: [
-      { label: "Mentions légales", href: "#" },
-      { label: "Politique de confidentialité", href: "#" },
-      { label: "CGU", href: "#" },
+      { label: "Mentions légales", href: "/mentions-legales" },
+      { label: "Politique de confidentialité", href: "/politique-de-confidentialite" },
+      { label: "CGU", href: "/cgu" },
     ],
   };
 

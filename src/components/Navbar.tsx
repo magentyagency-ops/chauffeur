@@ -113,7 +113,7 @@ export default function Navbar() {
               Connexion
             </a>
             <a href="/auth/register" className="btn-primary justify-center !text-sm">
-              <span>Commencer gratuitement</span>
+              <span>Commencer</span>
             </a>
           </div>
         </div>

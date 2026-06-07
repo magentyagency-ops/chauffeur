@@ -43,12 +43,21 @@ export async function updateDriverProfile(data: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Non authentifié" };
 
+    const updatePayload: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (data.full_name !== undefined) updatePayload.full_name = data.full_name;
+    if (data.phone !== undefined) updatePayload.phone = data.phone;
+    if (data.whatsapp !== undefined) updatePayload.whatsapp = data.whatsapp;
+    if (data.city !== undefined) updatePayload.city = data.city;
+    if (data.bio !== undefined) updatePayload.bio = data.bio;
+    if (data.public_slug !== undefined) updatePayload.public_slug = data.public_slug;
+    if (data.vehicle_model !== undefined) updatePayload.vehicle_model = data.vehicle_model;
+    if (data.profile_photo_url !== undefined) updatePayload.profile_photo_url = data.profile_photo_url;
+
     const { error } = await supabase
       .from("driver_profiles")
-      .update({
-        ...data,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", user.id);
 
     if (error) {

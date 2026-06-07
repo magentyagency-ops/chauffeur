@@ -175,9 +175,9 @@ export default function LandingPage() {
             <Link href="/auth/register" className="btn-accent !py-4 !px-8 !text-[16px]">
               Créer mon espace <Arrow />
             </Link>
-            <Link href="/chauffeur/jean-dupont" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white font-semibold text-[16px] rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+            <a href="https://calendly.com/clarencegomis/demo-vroom" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white font-semibold text-[16px] rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
               Réserver une démo
-            </Link>
+            </a>
           </div>
 
 
@@ -431,12 +431,12 @@ export default function LandingPage() {
                   <a href="#tarifs" className="text-[14px] text-white/60 hover:text-white transition-colors">Tarifs</a>
                 </div>
               </div>
-              <div>
+               <div>
                 <div className="text-[13px] font-bold text-white mb-4 tracking-wider uppercase">Légal</div>
                 <div className="flex flex-col gap-3">
-                  <a href="#" className="text-[14px] text-white/60 hover:text-white transition-colors">CGV</a>
-                  <a href="#" className="text-[14px] text-white/60 hover:text-white transition-colors">Confidentialité</a>
-                  <a href="#" className="text-[14px] text-white/60 hover:text-white transition-colors">Contact</a>
+                  <Link href="/cgu" className="text-[14px] text-white/60 hover:text-white transition-colors">CGU / CGV</Link>
+                  <Link href="/politique-de-confidentialite" className="text-[14px] text-white/60 hover:text-white transition-colors">Confidentialité</Link>
+                  <Link href="/mentions-legales" className="text-[14px] text-white/60 hover:text-white transition-colors">Mentions légales</Link>
                 </div>
               </div>
             </div>
