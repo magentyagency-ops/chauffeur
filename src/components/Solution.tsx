@@ -16,7 +16,7 @@ export default function Solution() {
               <span className="gradient-text">privée</span>
             </h2>
             <p className="mt-6 text-lg text-text-muted leading-relaxed">
-              PrivéChauffeur vous donne tous les outils pour construire votre
+              Vroom vous donne tous les outils pour construire votre
               activité de chauffeur privé indépendant, sans commissions et sans
               intermédiaire.
             </p>

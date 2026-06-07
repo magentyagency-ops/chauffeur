@@ -115,7 +115,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="py-6 border-t border-surface-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            © {currentYear} PrivéChauffeur. Tous droits réservés.
+            © {currentYear} Vroom. Tous droits réservés.
           </p>
           <p className="text-xs text-text-muted">
             Fait avec ❤️ pour les chauffeurs indépendants

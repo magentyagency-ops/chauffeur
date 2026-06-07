@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PrivéChauffeur — Votre clientèle privée, sans intermédiaire",
+  title: "Vroom — Votre clientèle privée, sans intermédiaire",
   description:
     "Créez votre page de réservation, gérez vos clients et recevez des demandes directes — en quelques minutes. La plateforme pour chauffeurs privés indépendants.",
   keywords: [

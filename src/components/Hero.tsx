@@ -89,7 +89,7 @@ export default function Hero() {
                   <div className="w-3 h-3 rounded-full bg-green-500/60" />
                 </div>
                 <div className="flex-1 h-7 bg-surface-light rounded-lg flex items-center px-3">
-                  <span className="text-xs text-text-muted">privechauffeur.com/thomas-dupont</span>
+                  <span className="text-xs text-text-muted">vroompro.fr/thomas-dupont</span>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

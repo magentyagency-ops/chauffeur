@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'PrivéChauffeur Dashboard',
-    short_name: 'Chauffeur',
+    name: 'Vroom Dashboard',
+    short_name: 'Vroom',
     description: 'Gestion de votre clientèle privée',
     display: 'standalone',
     background_color: '#ffffff',

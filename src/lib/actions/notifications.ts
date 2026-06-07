@@ -7,7 +7,7 @@ import webpush from "web-push";
 // Configurer web-push avec les clés VAPID
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    'mailto:contact@privechauffeur.fr',
+    'mailto:contact@vroompro.fr',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );

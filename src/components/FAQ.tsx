@@ -14,7 +14,7 @@ export default function FAQ() {
     {
       question: "Est-ce que je peux recevoir des réservations directement ?",
       answer:
-        "Oui, c'est le cœur de PrivéChauffeur. Vos clients peuvent réserver directement depuis votre page personnalisée. Vous recevez une notification instantanée et pouvez confirmer ou ajuster la réservation en un clic. Aucun intermédiaire entre vous et vos clients.",
+        "Oui, c'est le cœur de Vroom. Vos clients peuvent réserver directement depuis votre page personnalisée. Vous recevez une notification instantanée et pouvez confirmer ou ajuster la réservation en un clic. Aucun intermédiaire entre vous et vos clients.",
     },
     {
       question: "Est-ce que je peux désactiver ma disponibilité ?",
@@ -24,7 +24,7 @@ export default function FAQ() {
     {
       question: "Est-ce que la plateforme prend une commission ?",
       answer:
-        "Jamais. PrivéChauffeur fonctionne avec un abonnement mensuel fixe, transparent et prévisible. Nous ne prenons aucune commission sur vos courses. Que vous fassiez 10 ou 100 courses par mois, votre abonnement reste le même. Vous gardez 100% de vos revenus.",
+        "Jamais. Vroom fonctionne avec un abonnement mensuel fixe, transparent et prévisible. Nous ne prenons aucune commission sur vos courses. Que vous fassiez 10 ou 100 courses par mois, votre abonnement reste le même. Vous gardez 100% de vos revenus.",
     },
     {
       question: "Puis-je essayer gratuitement ?",
@@ -34,7 +34,7 @@ export default function FAQ() {
     {
       question: "Comment mes clients me trouvent-ils ?",
       answer:
-        "Vous recevez un lien personnalisé (ex: privechauffeur.com/votre-nom) que vous pouvez partager par SMS, WhatsApp, email ou imprimer sur vos cartes de visite. Vous pouvez aussi l'intégrer à vos réseaux sociaux.",
+        "Vous recevez un lien personnalisé (ex: vroompro.fr/votre-nom) que vous pouvez partager par SMS, WhatsApp, email ou imprimer sur vos cartes de visite. Vous pouvez aussi l'intégrer à vos réseaux sociaux.",
     },
   ];
 

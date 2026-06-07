@@ -148,7 +148,7 @@ export default function LandingPage() {
                 <div className="w-3 h-3 rounded-full bg-[#28c840]" />
               </div>
               <div className="flex-1 max-w-xs mx-auto bg-surface-alt rounded-md px-3 py-1.5 text-center">
-                <span className="text-[11px] text-muted font-mono">app.privechauffeur.com</span>
+                <span className="text-[11px] text-muted font-mono">app.vroompro.fr</span>
               </div>
             </div>
             {/* Content */}
@@ -421,7 +421,7 @@ export default function LandingPage() {
       <footer className="border-t border-border py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo />
-          <p className="text-[13px] text-muted">© 2025 PrivéChauffeur. Tous droits réservés.</p>
+          <p className="text-[13px] text-muted">© 2026 Vroom. Tous droits réservés.</p>
           <div className="flex gap-6">
             {["CGV", "Confidentialité", "Contact"].map(l => (
               <a key={l} href="#" className="text-[13px] text-muted hover:text-foreground transition-colors">{l}</a>
