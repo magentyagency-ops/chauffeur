@@ -180,9 +180,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="fade-up text-sm text-white/40 mt-6 font-mono" style={{ animationDelay: ".16s" }}>
-            14 jours gratuits · Sans CB · Sans engagement
-          </p>
+
         </div>
       </section>
 
