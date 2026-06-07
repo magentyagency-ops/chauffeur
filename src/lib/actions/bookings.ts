@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { sendPushNotification } from "./notifications";
 
@@ -107,7 +108,10 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
 // ─── cancelBookingByClient ────────────────────────────────────────────────
 export async function cancelBookingByClient(bookingId: string) {
   try {
-    const { createAdminClient } = await import("@/lib/supabase/admin");
+    // Validate UUID format to prevent injection
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookingId)) {
+      return { success: false, error: "Identifiant invalide." };
+    }
     const supabaseAdmin = createAdminClient();
 
     // Verify booking exists and is cancellable
@@ -159,7 +163,12 @@ export async function cancelBookingByClient(bookingId: string) {
 // ─── getBookingStatus (Public) ──────────────────────────────────────────
 export async function getBookingStatus(bookingId: string) {
   try {
-    const { data, error } = await supabaseAdmin
+    // Validate UUID format to prevent injection
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookingId)) {
+      return null;
+    }
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from("bookings")
       .select("status, driver_eta_minutes")
       .eq("id", bookingId)
@@ -303,10 +312,12 @@ export async function getDriverBookings(filters?: {
       query = query.gte("created_at", start.toISOString());
     }
 
-    // Search
+    // Search — sanitize input to prevent PostgREST filter injection
     if (filters?.search?.trim()) {
-      const s = filters.search.trim();
-      query = query.or(`client_name.ilike.%${s}%,pickup_address.ilike.%${s}%,destination_address.ilike.%${s}%,client_phone.ilike.%${s}%`);
+      const s = filters.search.trim().replace(/[%_\\(),.]/g, "");
+      if (s.length > 0) {
+        query = query.or(`client_name.ilike.%${s}%,pickup_address.ilike.%${s}%,destination_address.ilike.%${s}%,client_phone.ilike.%${s}%`);
+      }
     }
 
     const { data, error } = await query.limit(50);
