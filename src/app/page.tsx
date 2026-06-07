@@ -203,8 +203,47 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ HOW IT WORKS (Timeline) ═══ */}
+      <section className="py-32 px-6 bg-[#f5f5f3] relative overflow-hidden">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <Reveal>
+            <div className="text-center mb-20">
+              <p className="section-label mb-4">Processus</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+                3 étapes, <span className="text-muted">c'est tout.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div className="relative">
+            {/* Ligne verticale */}
+            <div className="absolute left-6 md:left-[50px] top-4 bottom-4 w-px bg-border" />
+            
+            <div className="space-y-16">
+              {[
+                { num: "1", title: "Créez votre compte", desc: "Inscrivez-vous en 2 minutes pour configurer votre profil de chauffeur privé." },
+                { num: "2", title: "Personnalisez votre vitrine", desc: "Ajoutez votre photo pro, les détails de votre véhicule de luxe et configurez votre grille tarifaire." },
+                { num: "3", title: "Partagez et encaissez", desc: "Envoyez votre lien unique à vos clients réguliers. Ils réservent facilement, vous gardez 100% du prix." },
+              ].map(({ num, title, desc }) => (
+                <Reveal key={num}>
+                  <div className="relative flex items-start gap-8 pl-0 md:pl-6">
+                    <div className="timeline-dot visible z-10 -ml-[18px] md:ml-0 bg-foreground text-background">
+                      {num}
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-2xl font-bold tracking-tight mb-3">{title}</h3>
+                      <p className="text-[16px] text-muted leading-relaxed max-w-lg">{desc}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══ FEATURES (Glassmorphism) ═══ */}
-      <section id="fonctionnalités" className="py-32 px-6 bg-[#f5f5f3] relative overflow-hidden">
+      <section id="fonctionnalités" className="py-32 px-6 bg-background relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-[400px] bg-foreground/5 rounded-full blur-[100px] pointer-events-none" />
         
         <div className="max-w-6xl mx-auto relative z-10">
@@ -239,45 +278,6 @@ export default function LandingPage() {
                 </div>
               </Reveal>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ HOW IT WORKS (Timeline) ═══ */}
-      <section className="py-32 px-6 bg-background">
-        <div className="max-w-4xl mx-auto">
-          <Reveal>
-            <div className="text-center mb-20">
-              <p className="section-label mb-4">Processus</p>
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-                3 étapes, <span className="text-muted">c'est tout.</span>
-              </h2>
-            </div>
-          </Reveal>
-
-          <div className="relative">
-            {/* Ligne verticale */}
-            <div className="absolute left-6 md:left-[50px] top-4 bottom-4 w-px bg-border" />
-            
-            <div className="space-y-16">
-              {[
-                { num: "1", title: "Créez votre compte gratuit", desc: "Inscrivez-vous en 2 minutes. Aucune carte bancaire n'est requise pour commencer votre essai." },
-                { num: "2", title: "Personnalisez votre vitrine", desc: "Ajoutez votre photo pro, les détails de votre véhicule de luxe et configurez votre grille tarifaire." },
-                { num: "3", title: "Partagez et encaissez", desc: "Envoyez votre lien unique à vos clients réguliers. Ils réservent facilement, vous gardez 100% du prix." },
-              ].map(({ num, title, desc }) => (
-                <Reveal key={num}>
-                  <div className="relative flex items-start gap-8 pl-0 md:pl-6">
-                    <div className="timeline-dot visible z-10 -ml-[18px] md:ml-0 bg-foreground text-background">
-                      {num}
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <h3 className="text-2xl font-bold tracking-tight mb-3">{title}</h3>
-                      <p className="text-[16px] text-muted leading-relaxed max-w-lg">{desc}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -358,9 +358,8 @@ export default function LandingPage() {
                   href="/auth/register"
                   className="btn-accent w-full !py-4 !text-[16px]"
                 >
-                  Commencer l'essai gratuit
+                  Créer mon espace
                 </Link>
-                <p className="text-center text-[13px] text-white/40 mt-4 font-mono">14 jours gratuits. Sans carte bancaire.</p>
 
                 <div className="mt-10 pt-8 flex flex-col gap-4 border-t border-white/10">
                   {[
