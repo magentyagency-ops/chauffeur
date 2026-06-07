@@ -15,7 +15,7 @@
   --border: #e8e6e1;
   --border-hover: #d4d2cc;
   --muted: #6b6a65;
-  --success: #06C167;
+  --success: #0a0a0a;
   --error: #e11d48;
   --accent: #276EF1;
 }
@@ -233,7 +233,7 @@ h1, h2, h3, h4 {
 .glass-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px -12px rgba(0,0,0,.08);
-  border-color: rgba(6,193,103,.2);
+  border-color: rgba(10,10,10,.15);
 }
 
 /* ─── Dark Section Links ───────────────────────── */
@@ -266,7 +266,7 @@ h1, h2, h3, h4 {
 }
 .timeline-dot.visible {
   transform: scale(1.1);
-  box-shadow: 0 0 0 8px rgba(6,193,103,.12);
+  box-shadow: 0 0 0 8px rgba(10,10,10,.08);
 }
 
 /* ─── Quote mark ───────────────────────────────── */
@@ -274,39 +274,52 @@ h1, h2, h3, h4 {
   font-size: 80px;
   line-height: 1;
   font-family: Georgia, serif;
-  color: var(--success);
-  opacity: .4;
+  color: var(--foreground);
+  opacity: .15;
   position: absolute;
   top: -10px;
   left: 20px;
 }
 
-/* ─── Enhanced btn-accent (green) ──────────────── */
+/* ─── Enhanced btn-accent (Monochrome) ────────── */
 .btn-accent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 14px 28px;
-  background: var(--success);
-  color: #0a0a0a;
+  background: #000000;
+  color: #ffffff;
   font-weight: 700;
   font-size: 15px;
   border-radius: 12px;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+  transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease;
 }
 .btn-accent:hover {
   opacity: .92;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(6,193,103,.35);
+  box-shadow: 0 8px 24px -4px rgba(0,0,0,.15);
 }
 .btn-accent:active { transform: translateY(0); }
 
+/* Adapt btn-accent in dark sections / cards to be white on black */
+.dark-section .btn-accent,
+.dark-card .btn-accent,
+.bg-foreground .btn-accent {
+  background: #ffffff;
+  color: #000000;
+}
+.dark-section .btn-accent:hover,
+.dark-card .btn-accent:hover,
+.bg-foreground .btn-accent:hover {
+  box-shadow: 0 8px 24px -4px rgba(255,255,255,.2);
+}
+
 /* ─── Gradient text ────────────────────────────── */
-.gradient-text-green {
-  background: linear-gradient(135deg, #06C167, #34d399);
+.gradient-text-mono {
+  background: linear-gradient(135deg, var(--foreground), var(--muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

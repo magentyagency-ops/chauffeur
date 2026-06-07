@@ -52,7 +52,7 @@ function CountUp({ end, suffix = "", prefix = "" }: { end: number, suffix?: stri
 // ─── Check icon ────────────────────────────────────────────
 function Check() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-success">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-current">
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
@@ -108,7 +108,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-success selection:text-black">
+    <div className="min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background">
       
       {/* ═══ NAVBAR ═══ */}
       <nav
@@ -157,7 +157,7 @@ export default function LandingPage() {
       <section className="relative pt-48 pb-32 px-6 dark-section overflow-hidden">
         <div className="grain-overlay" />
         {/* Soft, smooth glowing orb */}
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-success/15 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
 
@@ -207,12 +207,12 @@ export default function LandingPage() {
 
       {/* ═══ FEATURES (Glassmorphism) ═══ */}
       <section id="fonctionnalités" className="py-32 px-6 bg-[#f5f5f3] relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-[400px] bg-success/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-[400px] bg-foreground/5 rounded-full blur-[100px] pointer-events-none" />
         
         <div className="max-w-6xl mx-auto relative z-10">
           <Reveal>
             <div className="text-center mb-20">
-              <p className="section-label mb-4 gradient-text-green inline-block">Fonctionnalités</p>
+              <p className="section-label mb-4 gradient-text-mono inline-block">Fonctionnalités</p>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 Tout pour développer<br />
                 <span className="text-muted">votre activité.</span>
@@ -231,7 +231,7 @@ export default function LandingPage() {
             ].map(({ title, desc, icon }, i) => (
               <Reveal key={title} className="h-full">
                 <div className="glass-card p-8 h-full flex flex-col group">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground to-muted text-background flex items-center justify-center mb-6 shadow-lg group-hover:from-success group-hover:to-success transition-all duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground to-muted text-background flex items-center justify-center mb-6 shadow-lg group-hover:from-foreground group-hover:to-foreground transition-all duration-300">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d={icon} />
                     </svg>
@@ -310,7 +310,7 @@ export default function LandingPage() {
                     {t.text}
                   </p>
                   <div className="flex items-center gap-4 pt-8 mt-4 border-t border-white/10">
-                    <div className="w-12 h-12 rounded-full border-2 border-success flex items-center justify-center text-[15px] font-bold text-success bg-success/10">
+                    <div className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center text-[15px] font-bold text-white bg-white/5">
                       {t.name[0]}
                     </div>
                     <div>
@@ -339,14 +339,14 @@ export default function LandingPage() {
 
           <Reveal>
             <div className="max-w-md mx-auto relative">
-              <div className="absolute inset-0 bg-success/20 blur-[80px] rounded-full" />
+              <div className="absolute inset-0 bg-black/5 blur-[80px] rounded-full" />
               <div className="relative bg-foreground text-background rounded-[32px] p-10 shadow-2xl border border-white/10">
                 <div className="flex items-start justify-between mb-8">
                   <div>
                     <h3 className="text-2xl font-bold tracking-tight">Abonnement Pro</h3>
                     <p className="text-[14px] mt-2 text-white/60">Toutes les fonctionnalités incluses</p>
                   </div>
-                  <div className="px-3 py-1 bg-success/20 text-success text-[12px] font-bold rounded-full border border-success/30">
+                  <div className="px-3 py-1 bg-white/10 text-white text-[12px] font-bold rounded-full border border-white/20">
                     SANS ENGAGEMENT
                   </div>
                 </div>
@@ -391,7 +391,7 @@ export default function LandingPage() {
           <div className="max-w-5xl mx-auto">
             <div className="dark-section rounded-[40px] p-16 md:p-24 text-center relative overflow-hidden border border-border">
               <div className="grain-overlay" />
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-success/15 blur-[100px] pointer-events-none rounded-full" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-white/5 blur-[100px] pointer-events-none rounded-full" />
               
               <div className="relative z-10">
                 <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8">
@@ -448,7 +448,7 @@ export default function LandingPage() {
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-[13px] text-white/40">© {new Date().getFullYear()} Vroom. Tous droits réservés.</p>
             <div className="flex gap-4">
-              <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
+              <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
               <span className="text-[13px] text-white/40">Systèmes opérationnels</span>
             </div>
           </div>
