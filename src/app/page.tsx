@@ -7,16 +7,13 @@ import Link from "next/link";
    LANDING PAGE — PrivéChauffeur
    ═══════════════════════════════════════════════════════════ */
 
+import Image from "next/image";
+
 // ─── Logo ──────────────────────────────────────────────────
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
-      <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
-        <span className="text-background text-sm font-semibold leading-none mt-px">P</span>
-      </div>
-      <span className="text-[17px] font-semibold tracking-tight text-foreground">
-        Privé<span className="font-normal text-muted">chauffeur</span>
-      </span>
+    <Link href="/" className="relative w-28 h-8 flex items-center">
+      <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
     </Link>
   );
 }

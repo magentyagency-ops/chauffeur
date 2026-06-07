@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -9,14 +10,9 @@ export default function AuthLayout({
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-foreground flex items-center justify-center">
-              <span className="text-background text-base font-semibold leading-none mt-px">P</span>
-            </div>
-            <span className="text-2xl font-semibold tracking-tight text-foreground">
-              Privé<span className="font-normal text-muted">chauffeur</span>
-            </span>
+        <div className="text-center mb-10 flex justify-center">
+          <Link href="/" className="relative w-36 h-12 flex items-center justify-center">
+            <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain" priority />
           </Link>
         </div>
 

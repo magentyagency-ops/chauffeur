@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -33,16 +35,9 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <a href="#" className="flex items-center gap-2.5 mb-6">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
+              <div className="relative w-28 h-8 flex items-center">
+                <Image src="/vroomlogo.png" alt="Vroom Logo" fill className="object-contain object-left" priority />
               </div>
-              <span className="text-lg font-bold text-foreground">
-                Privé<span className="gradient-text">Chauffeur</span>
-              </span>
             </a>
             <p className="text-sm text-text-muted leading-relaxed mb-6">
               La plateforme qui donne aux chauffeurs privés le pouvoir de
