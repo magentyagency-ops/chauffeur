@@ -37,6 +37,7 @@ export const viewport = {
 };
 
 import SplashScreen from "@/components/SplashScreen";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export default function RootLayout({
   children,
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable}`}>
       <body>
+        <ServiceWorkerRegister />
         <SplashScreen />
         {children}
       </body>

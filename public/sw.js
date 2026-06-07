@@ -23,3 +23,9 @@ self.addEventListener('notificationclick', function(event) {
     clients.openWindow(event.notification.data.url)
   );
 });
+
+// Basic fetch handler to satisfy PWA requirements
+self.addEventListener('fetch', function(event) {
+  // Optional: Add offline caching logic here
+});
+

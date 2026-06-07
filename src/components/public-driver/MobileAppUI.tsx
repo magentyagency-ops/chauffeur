@@ -679,10 +679,32 @@ export default function MobileAppUI({ driver }: { driver: any }) {
 function InstallPWAOverlay({ driver }: { driver: any }) {
   const photoSrc = driver.profilePhotoUrl || "https://images.unsplash.com/photo-1626279140417-6d6f28f80455?q=80&w=800&auto=format&fit=crop";
   const [isIOS, setIsIOS] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleNativeInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+      }
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] bg-black text-white flex flex-col relative overflow-hidden">
@@ -722,7 +744,17 @@ function InstallPWAOverlay({ driver }: { driver: any }) {
           </p>
 
           <div className="space-y-8 text-left">
-            {isIOS ? (
+            {deferredPrompt ? (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <button 
+                  onClick={handleNativeInstall}
+                  className="w-full bg-white text-black font-bold py-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:brightness-110 transition-all text-lg"
+                >
+                  Installer l'application
+                </button>
+                <p className="text-xs text-gray-500 font-medium">Installation rapide et sécurisée via votre navigateur.</p>
+              </div>
+            ) : isIOS ? (
               <div className="flex items-start gap-5">
                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -744,7 +776,8 @@ function InstallPWAOverlay({ driver }: { driver: any }) {
               </div>
             )}
 
-            <div className="flex items-start gap-5">
+            {!deferredPrompt && (
+              <div className="flex items-start gap-5">
               <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </div>
@@ -753,6 +786,7 @@ function InstallPWAOverlay({ driver }: { driver: any }) {
                 <p className="text-xs text-gray-500 font-medium">L'application s'installera instantanément.</p>
               </div>
             </div>
+            )}
           </div>
         </motion.div>
 
