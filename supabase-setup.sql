@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS public.driver_profiles (
   is_available BOOLEAN DEFAULT false,
   bio TEXT,
   avatar_url TEXT,
+  stripe_customer_id TEXT UNIQUE,
+  stripe_subscription_id TEXT UNIQUE,
+  subscription_status TEXT,
+  stripe_price_id TEXT,
+  current_period_end TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

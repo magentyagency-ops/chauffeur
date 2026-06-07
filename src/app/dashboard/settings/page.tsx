@@ -38,7 +38,32 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Hidden for now — billing/subscription will be re-added later */}
+        {/* Abonnement */}
+        <section className="space-y-4">
+          <h3 className="text-lg font-bold tracking-tight">Abonnement</h3>
+          <div className="card p-6 border-surface-alt flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-[14px] font-bold">Gérer mon abonnement</p>
+              <p className="text-[13px] text-muted mt-1">Modifiez votre carte de crédit, téléchargez vos factures ou gérez votre forfait.</p>
+            </div>
+            <button 
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/portal', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                  else alert("Erreur lors de l'accès au portail.");
+                } catch(e) {
+                  console.error(e);
+                  alert("Erreur");
+                }
+              }}
+              className="btn-primary !py-2 !px-4 !text-[12px] w-full sm:w-auto shrink-0"
+            >
+              Portail Client
+            </button>
+          </div>
+        </section>
       </main>
     </>
   );

@@ -30,7 +30,7 @@ export default function ProfilePage() {
         const { data: dbProfile } = await supabase
           .from("driver_profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("id", user.id)
           .single();
         
         if (dbProfile) {

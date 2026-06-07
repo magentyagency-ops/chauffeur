@@ -56,7 +56,7 @@ export default async function PublicDriverPage({ params }: { params: Promise<{ s
     // Override with real data from DB
     slug: dbProfile.public_slug,
     publicName: dbProfile.full_name,
-    isAvailable: dbProfile.is_available,
+    isAvailable: dbProfile.is_available ?? false,
     firstName: dbProfile.full_name?.split(" ")[0] || "Chauffeur",
     city: dbProfile.city || mockPublicDriver.city,
     shortDescription: dbProfile.bio || `Chauffeur privé à ${dbProfile.city || "votre service"}. Réservez votre course en toute simplicité.`,

@@ -12,7 +12,7 @@ export async function updateDriverAvailability(isAvailable: boolean) {
     const { error } = await supabase
       .from("driver_profiles")
       .update({ is_available: isAvailable, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+      .eq("id", user.id);
 
     if (error) {
       console.error("Error updating availability:", error);
@@ -49,7 +49,7 @@ export async function updateDriverProfile(data: {
         ...data,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", user.id);
+      .eq("id", user.id);
 
     if (error) {
       console.error("Error updating profile:", error);

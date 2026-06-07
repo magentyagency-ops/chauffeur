@@ -24,7 +24,7 @@ export async function savePushSubscription(subscription: any) {
   const { data: profile, error: profileError } = await supabase
     .from("driver_profiles")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   if (profileError) {

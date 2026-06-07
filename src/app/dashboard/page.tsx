@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   const { data: profile } = await supabase
     .from("driver_profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   return <DashboardContent user={user} profile={profile} />;

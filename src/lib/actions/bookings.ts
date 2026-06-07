@@ -52,7 +52,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     // Find driver by slug
     const { data: driver, error: driverErr } = await supabase
       .from("driver_profiles")
-      .select("id, user_id, full_name, public_slug, is_available")
+      .select("id, full_name, public_slug, is_available")
       .eq("public_slug", input.driverSlug)
       .single();
 
@@ -140,7 +140,7 @@ export async function updateBookingStatus(input: {
     const { data: profile } = await supabase
       .from("driver_profiles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     if (!profile) return { success: false, error: "Profil chauffeur introuvable." };
@@ -225,7 +225,7 @@ export async function getDriverBookings(filters?: {
     const { data: profile } = await supabase
       .from("driver_profiles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     if (!profile) return { success: false, error: "Profil introuvable.", bookings: [] };
@@ -274,7 +274,7 @@ export async function getBookingDetail(bookingId: string) {
     const { data: profile } = await supabase
       .from("driver_profiles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     if (!profile) return { success: false, error: "Profil introuvable." };
@@ -311,7 +311,7 @@ export async function getDashboardStats() {
     const { data: profile } = await supabase
       .from("driver_profiles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     if (!profile) return null;
@@ -346,7 +346,7 @@ export async function updateInternalNote(bookingId: string, note: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false };
 
-    const { data: profile } = await supabase.from("driver_profiles").select("id").eq("user_id", user.id).single();
+    const { data: profile } = await supabase.from("driver_profiles").select("id").eq("id", user.id).single();
     if (!profile) return { success: false };
 
     await supabase

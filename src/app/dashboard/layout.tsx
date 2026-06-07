@@ -15,7 +15,7 @@ export default async function DashboardLayout({
     const { data: profile } = await supabase
       .from("driver_profiles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
     if (profile) driverId = profile.id;
   }

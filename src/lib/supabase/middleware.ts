@@ -41,6 +41,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check subscription status for dashboard
+  if (user && request.nextUrl.pathname.startsWith("/dashboard")) {
+    // We allow access to settings so they can manage their account or see portal
+    if (!request.nextUrl.pathname.startsWith("/dashboard/settings")) {
+      const { data: profile } = await supabase
+        .from("driver_profiles")
+        .select("subscription_status")
+        .eq("id", user.id)
+        .single();
+      
+      const isActive = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
+      if (!isActive) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/pricing";
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   // Redirect logged-in users away from auth pages
   if (user && request.nextUrl.pathname.startsWith("/auth/")) {
     const url = request.nextUrl.clone();

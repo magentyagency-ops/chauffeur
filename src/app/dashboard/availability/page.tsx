@@ -14,6 +14,7 @@ import {
   savePersistedAvailability
 } from "@/lib/mockAvailability";
 import { mockDriver } from "@/lib/mock-data";
+import { updateDriverAvailability } from "@/lib/actions/profile";
 
 export default function AvailabilityPage() {
   const [availability, setAvailability] = useState<DriverAvailability>(mockAvailability);
@@ -89,6 +90,8 @@ export default function AvailabilityPage() {
       setSaving(false);
       setShowConfig(false);
       showToast("Disponibilité activée.");
+      // Sync with database
+      updateDriverAvailability(true);
     }, 500);
   };
 
@@ -98,6 +101,8 @@ export default function AvailabilityPage() {
     savePersistedAvailability(newAvail);
     setShowDisableConfirm(false);
     showToast("Indisponible.");
+    // Sync with database
+    updateDriverAvailability(false);
   };
 
   return (

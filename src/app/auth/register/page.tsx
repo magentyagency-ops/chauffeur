@@ -47,12 +47,13 @@ export default function RegisterPage() {
 
       const slug = generateSlug(form.full_name);
       await supabase.from("driver_profiles").insert({
-        user_id: authData.user.id,
+        id: authData.user.id,
         full_name: form.full_name.trim(),
         phone: form.phone.trim(),
         city: form.city.trim(),
         vehicle_model: form.vehicle_model.trim(),
         public_slug: slug + "-" + Date.now().toString(36),
+        is_available: false, // Explicitly set to false to avoid any default value ambiguity
       });
 
       router.push("/dashboard");
