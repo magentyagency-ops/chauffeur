@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function SplashScreen() {
   const [showSplash, setShowSplash] = useState(false);
@@ -36,19 +37,25 @@ export default function SplashScreen() {
           className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+            initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
+            transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
             className="flex flex-col items-center"
           >
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-              Privé<span className="text-gray-400">Chauffeur</span>
-            </h1>
+            <div className="relative w-64 h-24 md:w-80 md:h-32 flex justify-center items-center">
+              <Image 
+                src="/vroomlogo.png" 
+                alt="Logo Vroom" 
+                fill 
+                className="object-contain"
+                priority
+              />
+            </div>
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: "100%", opacity: 1 }}
-              transition={{ duration: 1, delay: 1, ease: "circOut" }}
-              className="h-[2px] bg-white mt-4 rounded-full"
+              animate={{ width: "50%", opacity: 1 }}
+              transition={{ duration: 1, delay: 0.8, ease: "circOut" }}
+              className="h-[2px] bg-white mt-6 rounded-full"
             />
           </motion.div>
         </motion.div>
