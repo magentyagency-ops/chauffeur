@@ -98,6 +98,7 @@ function BookingRow({ booking, onAction, onDetail, actionLoading }: any) {
   const date = new Date(booking.scheduled_at || booking.created_at);
   const isPending = booking.status === "pending";
   const isAccepted = booking.status === "accepted";
+  const [showEta, setShowEta] = useState(false);
 
   return (
     <div className={`bg-white/80 backdrop-blur-xl border border-gray-100 shadow-[0_8px_32px_rgba(0,0,0,0.03)] rounded-[2rem] p-6 transition-all hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 group ${isPending ? "ring-2 ring-orange-500/20" : ""}`}>
@@ -120,16 +121,25 @@ function BookingRow({ booking, onAction, onDetail, actionLoading }: any) {
           </div>
         </div>
 
-        <div className="flex items-center gap-5 shrink-0 border-t border-gray-100 md:border-t-0 pt-5 md:pt-0">
+        <div className="flex flex-col md:flex-row items-end md:items-center gap-5 shrink-0 border-t border-gray-100 md:border-t-0 pt-5 md:pt-0">
           <div className="text-right hidden sm:block">
             <div className="text-[11px] font-[800] text-gray-400 uppercase tracking-wider block">{booking.booking_type === 'now' ? '⚡ Immédiat' : '📅 Réservé'}</div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            {isPending && (
-              <>
-                <button onClick={() => onAction(booking.id, "accepted")} className="bg-[#34D399] text-black hover:shadow-[0_4px_12px_rgba(52,211,153,0.3)] rounded-full transition-all font-bold px-5 py-3 text-[13px] w-full sm:w-auto">Accepter</button>
+          <div className="flex flex-col gap-2 w-full sm:w-auto">
+            {isPending && !showEta && (
+              <div className="flex gap-2 w-full">
+                <button onClick={() => setShowEta(true)} className="bg-[#34D399] text-black hover:shadow-[0_4px_12px_rgba(52,211,153,0.3)] rounded-full transition-all font-bold px-5 py-3 text-[13px] w-full sm:w-auto">Accepter</button>
                 <button onClick={() => onAction(booking.id, "refused")} className="bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all font-bold px-5 py-3 text-[13px] w-full sm:w-auto">Refuser</button>
-              </>
+              </div>
+            )}
+            {isPending && showEta && (
+              <div className="flex flex-wrap gap-2 w-full max-w-[250px] justify-end">
+                 <button onClick={() => { onAction(booking.id, "accepted", { etaMinutes: 10 }); setShowEta(false); }} className="bg-black text-white rounded-full font-bold px-3 py-1 text-xs">10m</button>
+                 <button onClick={() => { onAction(booking.id, "accepted", { etaMinutes: 15 }); setShowEta(false); }} className="bg-black text-white rounded-full font-bold px-3 py-1 text-xs">15m</button>
+                 <button onClick={() => { onAction(booking.id, "accepted", { etaMinutes: 20 }); setShowEta(false); }} className="bg-black text-white rounded-full font-bold px-3 py-1 text-xs">20m</button>
+                 <button onClick={() => { onAction(booking.id, "accepted", { etaMinutes: 30 }); setShowEta(false); }} className="bg-black text-white rounded-full font-bold px-3 py-1 text-xs">30m</button>
+                 <button onClick={() => setShowEta(false)} className="bg-gray-100 text-gray-500 rounded-full font-bold px-3 py-1 text-xs">X</button>
+              </div>
             )}
             {!isPending && (
                <button onClick={onDetail} className="bg-black shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:-translate-y-1 rounded-full transition-all font-[900] px-8 py-3 text-[16px] text-white w-full sm:w-auto uppercase tracking-wider">GO</button>

@@ -199,6 +199,9 @@ export default function MobileAppUI({ driver }: { driver: any }) {
           if (payload.new?.status) {
             setBookingStatus(payload.new.status);
           }
+          if (payload.new?.driver_eta_minutes !== undefined && payload.new?.driver_eta_minutes !== null) {
+            setDriverEta(payload.new.driver_eta_minutes);
+          }
         }
       )
       .subscribe();
