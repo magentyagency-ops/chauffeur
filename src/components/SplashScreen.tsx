@@ -1,21 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-export default function SplashScreen() {
-  const [showSplash, setShowSplash] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+// Use useLayoutEffect to prevent visual flicker when checking sessionStorage
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-  useEffect(() => {
-    setIsMounted(true);
-    // On vérifie si l'utilisateur a déjà vu l'animation durant cette session
+export default function SplashScreen() {
+  // Default to true so the server sends the splash screen HTML right away,
+  // preventing the underlying page from flashing before React hydrates.
+  const [showSplash, setShowSplash] = useState(true);
+
+  useIsomorphicLayoutEffect(() => {
     const hasSeenSplash = sessionStorage.getItem("splashSeen");
     
-    if (!hasSeenSplash) {
-      setShowSplash(true);
-      // L'animation reste 2.5 secondes puis disparaît
+    if (hasSeenSplash) {
+      // If already seen in this session, hide it immediately before browser paint
+      setShowSplash(false);
+    } else {
+      // If first time, keep it visible and set a timer to hide it
       const timer = setTimeout(() => {
         setShowSplash(false);
         sessionStorage.setItem("splashSeen", "true");
@@ -24,13 +28,13 @@ export default function SplashScreen() {
     }
   }, []);
 
-  if (!isMounted) return null;
-
   return (
     <AnimatePresence>
       {showSplash && (
         <motion.div
           key="splash"
+          // We don't animate the initial opacity of the background so it is solid black immediately.
+          // This ensures no transparency lets the page peek through during the first split second.
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
