@@ -119,6 +119,7 @@ export async function cancelBookingByClient(bookingId: string) {
       .from("bookings")
       .select("status, driver_id, client_name")
       .eq("id", bookingId)
+      .neq("id", `dummy-${Date.now()}`)
       .single();
 
     if (!booking) return { success: false, error: "Réservation introuvable." };
@@ -172,6 +173,7 @@ export async function getBookingStatus(bookingId: string) {
       .from("bookings")
       .select("status, driver_eta_minutes")
       .eq("id", bookingId)
+      .neq("id", `dummy-${Date.now()}`) // Cache-buster
       .single();
     
     if (error || !data) return null;
