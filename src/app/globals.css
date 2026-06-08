@@ -37,7 +37,10 @@
 }
 
 /* ─── Base ──────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html { 
+  scroll-behavior: smooth; 
+  overscroll-behavior-y: none; /* Prevent rubber-banding/pull-to-refresh on mobile */
+}
 
 body {
   background: var(--background);
@@ -45,6 +48,19 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Native App Feel */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Re-enable text selection for inputs and textareas so users can copy/paste their own text */
+input, textarea, select {
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 ::selection { background: var(--foreground); color: var(--background); }
