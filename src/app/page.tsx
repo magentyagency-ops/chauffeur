@@ -162,8 +162,8 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center relative z-10">
 
 
-          <h1 className="fade-up text-[clamp(44px,8vw,80px)] font-bold tracking-tight leading-[1.05] mb-6" style={{ animationDelay: ".04s" }}>
-            Votre clientèle privée,<br />
+          <h1 className="fade-up text-[clamp(36px,8vw,80px)] font-bold tracking-tight leading-[1.05] mb-6" style={{ animationDelay: ".04s" }}>
+            Votre clientèle privée, <br className="hidden md:block" />
             <span className="text-white/40">sans intermédiaire.</span>
           </h1>
 
