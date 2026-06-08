@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createBooking } from "@/lib/actions/bookings";
+import { createBooking, getBookingStatus, cancelBookingByClient } from "@/lib/actions/bookings";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import dynamic from "next/dynamic";
@@ -170,7 +170,6 @@ export default function MobileAppUI({ driver }: { driver: any }) {
 
     setIsCancelling(true);
     try {
-      const { cancelBookingByClient } = await import("@/lib/actions/bookings");
       const res = await cancelBookingByClient(activeBookingId);
       if (res.success) {
         setBookingStatus("cancelled");
@@ -188,7 +187,6 @@ export default function MobileAppUI({ driver }: { driver: any }) {
   // Direct client-side polling function via Server Action (Secure)
   const pollStatus = useCallback(async (bookingId: string) => {
     try {
-      const { getBookingStatus } = await import("@/lib/actions/bookings");
       const res = await getBookingStatus(bookingId);
       
       if (res && res.status !== statusRef.current) {
