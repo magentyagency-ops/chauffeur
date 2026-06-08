@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { revalidatePath } from "next/cache";
+// createAdminClient no longer needed — public operations use SECURITY DEFINER RPCs
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import { sendPushNotification } from "./notifications";
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -112,47 +112,22 @@ export async function cancelBookingByClient(bookingId: string) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookingId)) {
       return { success: false, error: "Identifiant invalide." };
     }
-    const supabaseAdmin = createAdminClient();
 
-    // Verify booking exists and is cancellable
-    const { data: booking } = await supabaseAdmin
-      .from("bookings")
-      .select("status, driver_id, client_name")
-      .eq("id", bookingId)
-      .neq("id", `dummy-${Date.now()}`)
-      .single();
+    // Use the regular client + SECURITY DEFINER RPC (same pattern as createBooking)
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("cancel_booking_public", {
+      p_booking_id: bookingId,
+    });
 
-    if (!booking) return { success: false, error: "Réservation introuvable." };
-    if (["completed", "cancelled", "refused"].includes(booking.status)) {
-      return { success: false, error: "Cette course ne peut plus être annulée." };
+    if (error) {
+      console.error("cancel_booking_public RPC error:", error);
+      return { success: false, error: "Erreur lors de l'annulation." };
     }
 
-    // Update status to cancelled
-    const { error: updateErr } = await supabaseAdmin
-      .from("bookings")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() })
-      .eq("id", bookingId);
-
-    if (updateErr) return { success: false, error: "Erreur lors de l'annulation." };
-
-    // Create event
-    await supabaseAdmin.from("booking_events").insert({
-      booking_id: bookingId,
-      driver_id: booking.driver_id,
-      event_type: "status_cancelled",
-      previous_status: booking.status,
-      new_status: "cancelled",
-      message: "Annulée par le client.",
-    });
-
-    // Create notification for driver
-    await supabaseAdmin.from("notifications").insert({
-      driver_id: booking.driver_id,
-      booking_id: bookingId,
-      type: "booking_cancelled",
-      title: "Réservation annulée",
-      message: `${booking.client_name} a annulé sa réservation.`,
-    });
+    // The RPC returns a JSON object with { success, error? }
+    if (data && typeof data === "object") {
+      return data as { success: boolean; error?: string };
+    }
 
     return { success: true };
   } catch (e) {
@@ -163,21 +138,21 @@ export async function cancelBookingByClient(bookingId: string) {
 
 // ─── getBookingStatus (Public) ──────────────────────────────────────────
 export async function getBookingStatus(bookingId: string) {
+  noStore();
   try {
     // Validate UUID format to prevent injection
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookingId)) {
       return null;
     }
-    const adminClient = createAdminClient();
-    const { data, error } = await adminClient
-      .from("bookings")
-      .select("status, driver_eta_minutes")
-      .eq("id", bookingId)
-      .neq("id", `dummy-${Date.now()}`) // Cache-buster
-      .single();
-    
+
+    // Use the regular client + SECURITY DEFINER RPC (bypasses RLS without needing service role key)
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_booking_status", {
+      p_booking_id: bookingId,
+    });
+
     if (error || !data) return null;
-    return { status: data.status, eta: data.driver_eta_minutes };
+    return { status: data.status, eta: data.eta };
   } catch {
     return null;
   }
